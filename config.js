@@ -1,107 +1,80 @@
+// Configuration de l'API
 const CONFIG = {
-  API_URL: 'https://ns-rzdd.onrender.com'
+  API_URL: 'https://votre-api.render.com' // Remplacez par votre URL Render
 };
 
+// Liste des boissons avec images et prix en FCFA
 const BOISSONS = [
   { 
     id: 1, 
-    nom: "Coca-Cola", 
+    nom: "Coca-Cola 33cl", 
     prix: 500, 
     icone: "🥤", 
     couleur: "#E10E02",
-    description: "Boisson gazeuse rafraîchissante",
-    taille: "33cl",
-    image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?w=200&h=200&fit=crop"
+    image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200&h=200&fit=crop",
+    taille: "Petite"
   },
   { 
     id: 2, 
-    nom: "Pepsi", 
+    nom: "Pepsi 33cl", 
     prix: 500, 
     icone: "🥤", 
     couleur: "#004B93",
-    description: "Saveur unique et rafraîchissante",
-    taille: "33cl",
-    image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200&h=200&fit=crop"
+    image: "https://images.unsplash.com/photo-1624555130581-1d9cca783de0?w=200&h=200&fit=crop",
+    taille: "Petite"
   },
   { 
     id: 3, 
-    nom: "Fanta Orange", 
-    prix: 500, 
+    nom: "Fanta Orange 50cl", 
+    prix: 700, 
     icone: "🍊", 
     couleur: "#FF8C00",
-    description: "Goût orange pétillant",
-    taille: "33cl",
-    image: "https://images.unsplash.com/photo-1624517452483-7d5dffa935e9?w=200&h=200&fit=crop"
+    image: "https://images.unsplash.com/photo-1624517452481-1f3f9c45a37d?w=200&h=200&fit=crop",
+    taille: "Moyenne"
   },
   { 
     id: 4, 
-    nom: "Sprite", 
-    prix: 500, 
+    nom: "Sprite 50cl", 
+    prix: 700, 
     icone: "💚", 
     couleur: "#00FF00",
-    description: "Limonade au citron clair",
-    taille: "33cl",
-    image: "https://images.unsplash.com/photo-1632441719959-cc5d5b164c26?w=200&h=200&fit=crop"
+    image: "https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=200&h=200&fit=crop",
+    taille: "Moyenne"
   },
   { 
     id: 5, 
-    nom: "Coca-Cola Zéro", 
-    prix: 600, 
-    icone: "⚫", 
-    couleur: "#000000",
-    description: "Même goût, zéro sucre",
-    taille: "33cl",
-    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200&h=200&fit=crop"
+    nom: "Ice Tea Pêche 1L", 
+    prix: 1000, 
+    icone: "🍃", 
+    couleur: "#D4AF37",
+    image: "https://images.unsplash.com/photo-1546695259-ad30ff3fd643?w=200&h=200&fit=crop",
+    taille: "Grande"
   },
   { 
     id: 6, 
-    nom: "Pepsi Max", 
-    prix: 600, 
-    icone: "⚫", 
-    couleur: "#2D2D2D",
-    description: "Maximum de goût, zéro calorie",
-    taille: "33cl",
-    image: "https://images.unsplash.com/photo-1603398938373-e54da0bb5e48?w=200&h=200&fit=crop"
+    nom: "Orangina 1L", 
+    prix: 1000, 
+    icone: "🍊", 
+    couleur: "#FF6B00",
+    image: "https://images.unsplash.com/photo-1610873167013-2dd675d30ef4?w=200&h=200&fit=crop",
+    taille: "Grande"
   },
   { 
     id: 7, 
-    nom: "Fanta Ananas", 
-    prix: 700, 
-    icone: "🍍", 
-    couleur: "#FFD700",
-    description: "Saveur ananas tropical",
-    taille: "50cl",
-    image: "https://images.unsplash.com/photo-1624517452485-a8b7aaf4989e?w=200&h=200&fit=crop"
+    nom: "Oasis Tropical 50cl", 
+    prix: 800, 
+    icone: "🌺", 
+    couleur: "#FF1493",
+    image: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=200&h=200&fit=crop",
+    taille: "Moyenne"
   },
   { 
     id: 8, 
-    nom: "Schweppes Tonic", 
-    prix: 800, 
-    icone: "💫", 
-    couleur: "#FFFFFF",
-    description: "Tonic classique rafraîchissant",
-    taille: "33cl",
-    image: "https://images.unsplash.com/photo-1549888834-3ec93abae044?w=200&h=200&fit=crop"
-  },
-  { 
-    id: 9, 
-    nom: "Orangina", 
-    prix: 700, 
-    icone: "🍊", 
-    couleur: "#FF6B00",
-    description: "Pulpe d'orange rafraîchissante",
-    taille: "50cl",
-    image: "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=200&h=200&fit=crop"
-  },
-  { 
-    id: 10, 
-    nom: "Monster Energy", 
+    nom: "Schweppes Agrum' 1L", 
     prix: 1000, 
-    icone: "⚡", 
-    couleur: "#00FF00",
-    description: "Boisson énergisante puissante",
-    taille: "50cl",
-    image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=200&h=200&fit=crop"
+    icone: "💫", 
+    couleur: "#00CED1",
+    image: "https://images.unsplash.com/photo-1600271886742-f049cd47bba4?w=200&h=200&fit=crop",
+    taille: "Grande"
   }
-
 ];
