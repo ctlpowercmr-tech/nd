@@ -1,6 +1,6 @@
 // Configuration de l'API
 const CONFIG = {
-  API_URL: 'https://votre-api.render.com' // Remplacez par votre URL Render
+  API_URL: 'https://ns-1-0qzl.onrender.com' // Remplacez par votre URL Render
 };
 
 // Liste des boissons avec images et prix en FCFA
@@ -78,3 +78,4 @@ const BOISSONS = [
     taille: "Grande"
   }
 ];
+
