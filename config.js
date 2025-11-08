@@ -1,5 +1,5 @@
 const CONFIG = {
-  API_URL: 'https://server-6-oxdj.onrender.com'
+  API_URL: 'https://ns-rzdd.onrender.com'
 };
 
 const BOISSONS = [
@@ -103,4 +103,5 @@ const BOISSONS = [
     taille: "50cl",
     image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=200&h=200&fit=crop"
   }
+
 ];
