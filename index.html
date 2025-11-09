@@ -3,136 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DISTRIBUTEUR CTL - Boissons Fraîches</title>
+    <title>Distributeur Automatique Premium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <!-- CHANGEMENT: Utiliser une librairie QR code plus fiable -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <!-- Header Moderne -->
-        <header class="header">
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
             <div class="header-content">
                 <div class="logo">
-                    <h1>🥤 CTL DISTRIBUTEUR</h1>
-                    <p>Boissons Fraîches 24h/24</p>
+                    <i class="fas fa-cube"></i>
+                    <h1>DISTRIBUTEUR PREMIUM</h1>
                 </div>
                 <div class="header-info">
-                    <div class="solde-distributeur">
-                        <span>Solde Distributeur:</span>
-                        <strong id="solde-distributeur">0 FCFA</strong>
-                    </div>
-                    <div class="statut-connexion" id="statut-connexion">
-                        <div class="statut-lumiere"></div>
+                    <div class="status-online">
+                        <i class="fas fa-wifi"></i>
                         <span>En ligne</span>
+                    </div>
+                    <div class="solde-distributeur">
+                        <i class="fas fa-coins"></i>
+                        <span id="solde-distributeur">0</span> FCFA
                     </div>
                 </div>
             </div>
         </header>
 
-        <!-- Section Hero -->
-        <section class="hero">
-            <div class="hero-content">
-                <h2>CHOISISSEZ VOS BOISSONS FRAÎCHES</h2>
-                <p>Sélectionnez jusqu'à 2 boissons maximum</p>
-            </div>
-        </section>
-
-        <!-- Grille des Boissons Moderne -->
-        <section class="boissons-section">
-            <div class="filtres">
-                <button class="filtre-btn active" data-categorie="tous">Toutes</button>
-                <button class="filtre-btn" data-categorie="Soda">Sodas</button>
-                <button class="filtre-btn" data-categorie="Energy">Energy</button>
-                <button class="filtre-btn" data-categorie="Eau">Eaux</button>
-                <button class="filtre-btn" data-categorie="Jus">Jus</button>
-            </div>
-            
-            <div class="boissons-grid" id="boissons-grid">
-                <!-- Généré par JavaScript -->
-            </div>
-        </section>
-
-        <!-- Panier Flottant Moderne -->
-        <div class="panier-flottant" id="panier-flottant">
-            <div class="panier-header">
-                <h3>🛒 VOTRE SÉLECTION</h3>
-                <span class="badge" id="nombre-boissons">0</span>
-            </div>
-            <div class="panier-content">
-                <div id="panier-items" class="panier-items">
-                    <div class="panier-vide">Aucune boisson sélectionnée</div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Section Produits -->
+            <section class="produits-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-wine-bottle"></i> NOS BOISSONS</h2>
+                    <div class="filtres">
+                        <button class="filtre-btn active" data-categorie="all">Tous</button>
+                        <button class="filtre-btn" data-categorie="Soda">Sodas</button>
+                        <button class="filtre-btn" data-categorie="Eau">Eaux</button>
+                        <button class="filtre-btn" data-categorie="Jus">Jus</button>
+                    </div>
                 </div>
-                <div class="panier-total">
-                    <span>Total:</span>
-                    <strong id="total-panier">0 FCFA</strong>
-                </div>
-                <div class="panier-actions">
-                    <button id="btn-payer" class="btn-payer" disabled>
-                        <span>💰 PAYER MAINTENANT</span>
-                    </button>
-                    <button id="btn-vider" class="btn-vider">Vider</button>
-                </div>
-            </div>
-        </div>
 
-        <!-- Section Paiement Modale -->
-        <div class="modal-paiement" id="modal-paiement">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>🎯 PAIEMENT</h2>
-                    <button class="btn-fermer" id="fermer-modal">×</button>
+                <div class="produits-grid" id="produits-grid">
+                    <!-- Produits chargés dynamiquement -->
+                </div>
+            </section>
+
+            <!-- Panier -->
+            <section class="panier-section">
+                <div class="panier-header">
+                    <h3><i class="fas fa-shopping-cart"></i> VOTRE PANIER</h3>
+                    <div class="panier-stats">
+                        <span id="nombre-articles">0 article(s)</span>
+                        <span id="total-panier">0 FCFA</span>
+                    </div>
                 </div>
                 
-                <div class="qr-section">
+                <div class="panier-items" id="panier-items">
+                    <div class="panier-vide">
+                        <i class="fas fa-cart-arrow-down"></i>
+                        <p>Votre panier est vide</p>
+                        <small>Sélectionnez jusqu'à 2 boissons</small>
+                    </div>
+                </div>
+
+                <div class="panier-actions">
+                    <button id="btn-vider" class="btn-secondaire" disabled>
+                        <i class="fas fa-trash"></i> Vider
+                    </button>
+                    <button id="btn-payer" class="btn-primaire" disabled>
+                        <i class="fas fa-qrcode"></i> Payer Maintenant
+                    </button>
+                </div>
+            </section>
+
+            <!-- Section Paiement -->
+            <section class="paiement-section" id="paiement-section">
+                <div class="paiement-container">
+                    <div class="paiement-header">
+                        <h3><i class="fas fa-credit-card"></i> PAIEMENT</h3>
+                        <button id="btn-fermer-paiement" class="btn-fermer">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
                     <div class="qr-container">
-                        <div id="qr-code"></div>
+                        <div class="qr-code-wrapper">
+                            <div id="qr-code" class="qr-code"></div>
+                            <div class="qr-overlay">
+                                <div class="qr-animation"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="transaction-info">
+                            <div class="info-card">
+                                <div class="info-item">
+                                    <span class="info-label">ID Transaction:</span>
+                                    <span id="transaction-id" class="info-value">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Montant:</span>
+                                    <span id="montant-transaction" class="info-value prix">0 FCFA</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Expire dans:</span>
+                                    <span id="expiration-timer" class="info-value timer">10:00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="instructions">
+                            <i class="fas fa-mobile-alt"></i>
+                            <p>Scannez le QR code avec votre application mobile ou entrez l'ID de transaction</p>
+                        </div>
                     </div>
-                    <div class="transaction-info">
-                        <div class="info-card">
-                            <h4>ID Transaction</h4>
-                            <p id="transaction-id" class="transaction-id">-</p>
-                        </div>
-                        <div class="info-card">
-                            <h4>Montant à Payer</h4>
-                            <p id="montant-transaction" class="montant">0 FCFA</p>
-                        </div>
-                        <div class="info-card">
-                            <h4>Expire dans</h4>
-                            <p id="expiration-timer" class="timer">10:00</p>
+
+                    <div class="statut-paiement" id="statut-paiement">
+                        <div class="statut-content">
+                            <div class="loader"></div>
+                            <span>En attente de paiement...</span>
                         </div>
                     </div>
                 </div>
+            </section>
+        </main>
 
-                <div class="instructions">
-                    <div class="instruction-item">
-                        <span class="icon">📱</span>
-                        <p>Scannez le QR code avec votre téléphone</p>
-                    </div>
-                    <div class="instruction-item">
-                        <span class="icon">🔢</span>
-                        <p>Ou entrez l'ID de transaction dans l'application</p>
-                    </div>
-                </div>
-
-                <div class="statut-paiement" id="statut-paiement">
-                    <div class="loader"></div>
-                    <span>En attente de paiement...</span>
-                </div>
-
-                <button class="btn-annuler" id="annuler-paiement">
-                    ❌ Annuler la Transaction
-                </button>
-            </div>
-        </div>
-
-        <!-- Notification Vocale -->
-        <div id="notification-vocale" class="notification-vocale">
-            <div class="notification-content">
-                <span class="notification-icon">🎵</span>
-                <p id="message-vocal"></p>
-            </div>
-        </div>
+        <!-- Audio pour les messages vocaux -->
+        <audio id="audio-selection" preload="auto">
+            <source src="/sounds/selection.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="audio-paiement" preload="auto">
+            <source src="/sounds/paiement.mp3" type="audio/mpeg">
+        </audio>
     </div>
 
     <script src="config.js"></script>
