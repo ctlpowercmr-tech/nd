@@ -3,112 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DISTRIBUTEUR 3.0 - Boissons Premium</title>
+    <title>DISTRIBUTEUR FUTURISTE CTL - Interface Tablette</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="cyber-container">
+    <div class="container">
         <!-- Header Futuriste -->
-        <header class="cyber-header">
-            <div class="hologram-effect"></div>
-            <h1 class="cyber-title">DISTRIBUTEUR <span class="cyber-accent">3.0</span></h1>
-            <div class="status-panel">
-                <div class="status-item" id="status-connexion">
-                    <div class="status-led"></div>
-                    <span>EN LIGNE</span>
+        <header class="header-futuriste">
+            <div class="logo-section">
+                <div class="logo-anime">
+                    <div class="logo-circle"></div>
+                    <h1>CTL DISTRIBUTEUR</h1>
                 </div>
-                <div class="status-item">
-                    <div class="status-led active"></div>
-                    <span>SYSTÈME ACTIF</span>
+                <div class="status-bar">
+                    <div class="status-online">
+                        <div class="pulse-dot"></div>
+                        <span>EN LIGNE</span>
+                    </div>
+                    <div class="solde-distributeur">
+                        📦 Solde: <span id="solde-distributeur">0</span> FCFA
+                    </div>
                 </div>
             </div>
         </header>
 
-        <!-- Navigation Holographique -->
-        <nav class="cyber-nav">
-            <div class="nav-glow"></div>
-            <button class="nav-btn active" data-section="boissons">BOISSONS</button>
-            <button class="nav-btn" data-section="panier">PANIER</button>
-            <button class="nav-btn" data-section="paiement">PAIEMENT</button>
-        </nav>
-
-        <main class="cyber-main">
-            <!-- Section Boissons -->
-            <section id="boissons-section" class="section active">
-                <h2 class="section-title">SÉLECTIONNEZ VOS BOISSONS</h2>
-                <div class="produits-grid" id="produits-grid">
-                    <!-- Produits chargés dynamiquement -->
+        <!-- Section Produits -->
+        <section class="produits-section">
+            <div class="section-header">
+                <h2>🎯 SÉLECTIONNEZ VOS BOISSONS</h2>
+                <div class="selection-counter">
+                    <span id="counter">0</span>/2 produits sélectionnés
                 </div>
-            </section>
+            </div>
+            
+            <div class="produits-grid" id="produits-grid">
+                <!-- Produits chargés dynamiquement -->
+            </div>
+        </section>
 
-            <!-- Section Panier -->
-            <section id="panier-section" class="section">
-                <h2 class="section-title">VOTRE SÉLECTION</h2>
-                <div class="panier-container">
-                    <div class="panier-items" id="panier-items">
-                        <div class="panier-vide">Aucun produit sélectionné</div>
-                    </div>
-                    <div class="panier-total">
-                        <span>TOTAL:</span>
-                        <span id="total-panier">0</span>
-                        <span>FCFA</span>
-                    </div>
-                    <button class="cyber-btn primary" id="btn-payer">
-                        <span class="btn-glow"></span>
-                        PROCÉDER AU PAIEMENT
-                    </button>
+        <!-- Panier -->
+        <section class="panier-section">
+            <div class="panier-header">
+                <h3>🛒 VOTRE PANIER</h3>
+                <div class="total-panier">
+                    Total: <span id="total-panier">0</span> FCFA
                 </div>
-            </section>
+            </div>
+            <div class="panier-items" id="panier-items">
+                <div class="panier-vide">
+                    <div class="empty-icon">📭</div>
+                    <p>Aucun produit sélectionné</p>
+                </div>
+            </div>
+        </section>
 
-            <!-- Section Paiement -->
-            <section id="paiement-section" class="section">
-                <h2 class="section-title">FINALISATION DE COMMANDE</h2>
-                <div class="paiement-container">
-                    <div class="qr-hologram">
-                        <div class="hologram-base"></div>
+        <!-- Actions -->
+        <div class="actions-section">
+            <button id="btn-payer" class="btn-futuriste btn-payer" disabled>
+                <span class="btn-icon">💳</span>
+                <span class="btn-text">PROCÉDER AU PAIEMENT</span>
+                <div class="btn-glow"></div>
+            </button>
+            <button id="btn-reset" class="btn-futuriste btn-secondaire">
+                <span class="btn-icon">🔄</span>
+                <span class="btn-text">RÉINITIALISER</span>
+            </button>
+        </div>
+
+        <!-- Section Paiement -->
+        <section class="paiement-section" id="paiement-section">
+            <div class="paiement-container">
+                <div class="paiement-header">
+                    <h2>📱 PAIEMENT PAR QR CODE</h2>
+                    <div class="timer" id="timer">10:00</div>
+                </div>
+                
+                <div class="qr-container">
+                    <div class="qr-frame">
                         <div id="qr-code" class="qr-code"></div>
-                        <div class="scan-glow"></div>
+                        <div class="qr-glow"></div>
                     </div>
                     
                     <div class="transaction-info">
                         <div class="info-card">
-                            <div class="info-label">ID TRANSACTION</div>
-                            <div class="info-value" id="transaction-id">-</div>
+                            <div class="info-item">
+                                <span class="info-label">ID Transaction:</span>
+                                <span id="transaction-id" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Montant:</span>
+                                <span id="montant-transaction" class="info-value montant">0 FCFA</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Expire dans:</span>
+                                <span id="expiration-timer" class="info-value timer">10:00</span>
+                            </div>
                         </div>
-                        <div class="info-card">
-                            <div class="info-label">MONTANT TOTAL</div>
-                            <div class="info-value" id="montant-transaction">0 FCFA</div>
-                        </div>
-                        <div class="info-card">
-                            <div class="info-label">TEMPS RESTANT</div>
-                            <div class="info-value timer" id="expiration-timer">10:00</div>
-                        </div>
-                    </div>
-
-                    <div class="statut-paiement" id="statut-paiement">
-                        <div class="pulse-loader"></div>
-                        <span>EN ATTENTE DE PAIEMENT...</span>
-                    </div>
-
-                    <div class="actions-paiement">
-                        <button class="cyber-btn secondary" id="annuler-paiement">
-                            ANNULER LA TRANSACTION
-                        </button>
                     </div>
                 </div>
-            </section>
-        </main>
 
-        <!-- Audio pour les messages vocaux -->
-        <audio id="audio-scan" preload="auto">
-            <source src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3" type="audio/mpeg">
-        </audio>
-        <audio id="audio-success" preload="auto">
-            <source src="https://assets.mixkit.co/sfx/preview/mixkit-success-bell-900.mp3" type="audio/mpeg">
-        </audio>
+                <div class="instructions">
+                    <div class="instruction-item">
+                        <span class="instruction-icon">📱</span>
+                        <span>Ouvrez l'application CTL sur votre téléphone</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="instruction-icon">🔍</span>
+                        <span>Scannez le QR code ou entrez l'ID de transaction</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="instruction-icon">✅</span>
+                        <span>Confirmez le paiement</span>
+                    </div>
+                </div>
+
+                <div class="statut-paiement" id="statut-paiement">
+                    <div class="statut-content">
+                        <div class="loader"></div>
+                        <span>En attente du paiement...</span>
+                    </div>
+                </div>
+
+                <button id="annuler-paiement" class="btn-futuriste btn-annuler">
+                    <span class="btn-icon">❌</span>
+                    <span class="btn-text">ANNULER LA TRANSACTION</span>
+                </button>
+            </div>
+        </section>
     </div>
+
+    <!-- Notification Vocale -->
+    <div id="vocal-notification" class="vocal-notification"></div>
 
     <script src="config.js"></script>
     <script src="script.js"></script>
