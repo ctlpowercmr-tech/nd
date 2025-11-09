@@ -3,139 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DISTRIBUTEUR FUTURISTE CTL - Interface Tablette</title>
+    <title>DISTRIBUTEUR FUTURISTE - Boissons Fraîches</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <!-- Header Futuriste -->
         <header class="header-futuriste">
-            <div class="logo-section">
-                <div class="logo-anime">
-                    <div class="logo-circle"></div>
-                    <h1>CTL DISTRIBUTEUR</h1>
+            <div class="logo-container">
+                <div class="logo-pulse"></div>
+                <h1>DISTRIBUTEUR <span class="gradient-text">FUTURISTE</span></h1>
+            </div>
+            <div class="status-bar">
+                <div class="status-online">
+                    <div class="pulse-dot"></div>
+                    SYSTÈME EN LIGNE
                 </div>
-                <div class="status-bar">
-                    <div class="status-online">
-                        <div class="pulse-dot"></div>
-                        <span>EN LIGNE</span>
-                    </div>
-                    <div class="solde-distributeur">
-                        📦 Solde: <span id="solde-distributeur">0</span> FCFA
-                    </div>
-                </div>
+                <div class="datetime" id="datetime"></div>
             </div>
         </header>
 
-        <!-- Section Produits -->
-        <section class="produits-section">
-            <div class="section-header">
-                <h2>🎯 SÉLECTIONNEZ VOS BOISSONS</h2>
-                <div class="selection-counter">
-                    <span id="counter">0</span>/2 produits sélectionnés
+        <!-- Section Sélection -->
+        <main class="main-content">
+            <section class="selection-section">
+                <div class="section-header">
+                    <h2 class="section-title">SÉLECTIONNEZ VOS BOISSONS</h2>
+                    <div class="selection-counter">
+                        <span id="counter">0</span>/2
+                    </div>
                 </div>
-            </div>
-            
-            <div class="produits-grid" id="produits-grid">
-                <!-- Produits chargés dynamiquement -->
-            </div>
-        </section>
 
-        <!-- Panier -->
-        <section class="panier-section">
-            <div class="panier-header">
-                <h3>🛒 VOTRE PANIER</h3>
-                <div class="total-panier">
-                    Total: <span id="total-panier">0</span> FCFA
+                <div class="boissons-grid" id="boissons-grid">
+                    <!-- Généré par JavaScript -->
                 </div>
-            </div>
-            <div class="panier-items" id="panier-items">
-                <div class="panier-vide">
-                    <div class="empty-icon">📭</div>
-                    <p>Aucun produit sélectionné</p>
+
+                <div class="panier-section">
+                    <div class="panier-header">
+                        <h3>VOTRE COMMANDE</h3>
+                        <div class="total-amount" id="total-panier">0 FCFA</div>
+                    </div>
+                    <div class="panier-items" id="panier">
+                        <div class="panier-vide">
+                            <div class="empty-icon">🥤</div>
+                            <p>Aucune boisson sélectionnée</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- Actions -->
-        <div class="actions-section">
-            <button id="btn-payer" class="btn-futuriste btn-payer" disabled>
-                <span class="btn-icon">💳</span>
-                <span class="btn-text">PROCÉDER AU PAIEMENT</span>
-                <div class="btn-glow"></div>
-            </button>
-            <button id="btn-reset" class="btn-futuriste btn-secondaire">
-                <span class="btn-icon">🔄</span>
-                <span class="btn-text">RÉINITIALISER</span>
-            </button>
-        </div>
-
-        <!-- Section Paiement -->
-        <section class="paiement-section" id="paiement-section">
-            <div class="paiement-container">
+            <!-- Section Paiement -->
+            <section class="paiement-section" id="paiement-section">
                 <div class="paiement-header">
-                    <h2>📱 PAIEMENT PAR QR CODE</h2>
-                    <div class="timer" id="timer">10:00</div>
+                    <h2>PAIEMENT</h2>
+                    <div class="transaction-id">ID: <span id="transaction-id">-</span></div>
                 </div>
-                
+
                 <div class="qr-container">
                     <div class="qr-frame">
                         <div id="qr-code" class="qr-code"></div>
-                        <div class="qr-glow"></div>
+                        <div class="qr-scan-line"></div>
                     </div>
-                    
-                    <div class="transaction-info">
-                        <div class="info-card">
+                    <div class="qr-instructions">
+                        <div class="voice-message">
+                            <div class="voice-icon">🎤</div>
+                            <p>"Veuillez scanner le QR code avec votre téléphone ou utiliser l'ID de transaction"</p>
+                        </div>
+                        <div class="transaction-info">
                             <div class="info-item">
-                                <span class="info-label">ID Transaction:</span>
-                                <span id="transaction-id" class="info-value">-</span>
+                                <span>Montant:</span>
+                                <strong id="montant-transaction">0 FCFA</strong>
                             </div>
                             <div class="info-item">
-                                <span class="info-label">Montant:</span>
-                                <span id="montant-transaction" class="info-value montant">0 FCFA</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Expire dans:</span>
-                                <span id="expiration-timer" class="info-value timer">10:00</span>
+                                <span>Expire dans:</span>
+                                <strong id="expiration-timer">10:00</strong>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="instructions">
-                    <div class="instruction-item">
-                        <span class="instruction-icon">📱</span>
-                        <span>Ouvrez l'application CTL sur votre téléphone</span>
-                    </div>
-                    <div class="instruction-item">
-                        <span class="instruction-icon">🔍</span>
-                        <span>Scannez le QR code ou entrez l'ID de transaction</span>
-                    </div>
-                    <div class="instruction-item">
-                        <span class="instruction-icon">✅</span>
-                        <span>Confirmez le paiement</span>
+                <div class="paiement-status" id="statut-paiement">
+                    <div class="status-loading">
+                        <div class="loading-spinner"></div>
+                        <span>En attente de paiement...</span>
                     </div>
                 </div>
 
-                <div class="statut-paiement" id="statut-paiement">
-                    <div class="statut-content">
-                        <div class="loader"></div>
-                        <span>En attente du paiement...</span>
-                    </div>
-                </div>
-
-                <button id="annuler-paiement" class="btn-futuriste btn-annuler">
-                    <span class="btn-icon">❌</span>
-                    <span class="btn-text">ANNULER LA TRANSACTION</span>
+                <button class="btn-annuler" id="annuler-paiement">
+                    <span class="btn-icon">↶</span>
+                    Annuler la transaction
                 </button>
-            </div>
-        </section>
-    </div>
+            </section>
+        </main>
 
-    <!-- Notification Vocale -->
-    <div id="vocal-notification" class="vocal-notification"></div>
+        <!-- Actions Principales -->
+        <div class="actions-container">
+            <button class="btn-action btn-modifier" id="btn-modifier" disabled>
+                <span class="btn-icon">⟲</span>
+                MODIFIER
+            </button>
+            <button class="btn-action btn-payer" id="btn-payer" disabled>
+                <span class="btn-icon">💳</span>
+                PAYER MAINTENANT
+            </button>
+        </div>
+
+        <!-- Notifications -->
+        <div class="notification-container" id="notifications"></div>
+    </div>
 
     <script src="config.js"></script>
     <script src="script.js"></script>
