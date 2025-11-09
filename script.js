@@ -1,654 +1,358 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-:root {
-    --primary: #667eea;
-    --primary-dark: #5a6fd8;
-    --secondary: #764ba2;
-    --success: #10b981;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --dark: #1f2937;
-    --light: #f8fafc;
-    --gray: #6b7280;
-}
-
-body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    min-height: 100vh;
-    overflow-x: hidden;
-}
-
-.container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-/* Header Moderne */
-.header {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    border-radius: 20px;
-    padding: 25px 30px;
-    margin-bottom: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}
-
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-.logo h1 {
-    font-size: 2.5rem;
-    margin-bottom: 5px;
-    background: linear-gradient(45deg, #fff, #a5b4fc);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.logo p {
-    color: #cbd5e1;
-    font-size: 1.1rem;
-}
-
-.header-info {
-    display: flex;
-    gap: 30px;
-    align-items: center;
-}
-
-.solde-distributeur {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 15px 20px;
-    border-radius: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.solde-distributeur strong {
-    font-size: 1.3rem;
-    color: #10b981;
-}
-
-.statut-connexion {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(16, 185, 129, 0.2);
-    padding: 12px 20px;
-    border-radius: 25px;
-    border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.statut-lumiere {
-    width: 12px;
-    height: 12px;
-    background: #10b981;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-/* Section Hero */
-.hero {
-    text-align: center;
-    margin-bottom: 40px;
-    padding: 40px 20px;
-}
-
-.hero h2 {
-    font-size: 3rem;
-    margin-bottom: 15px;
-    background: linear-gradient(45deg, #fff, #f0abfc);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-}
-
-.hero p {
-    font-size: 1.3rem;
-    color: #cbd5e1;
-}
-
-/* Filtres */
-.filtres {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 40px;
-    flex-wrap: wrap;
-}
-
-.filtre-btn {
-    padding: 12px 25px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 600;
-}
-
-.filtre-btn:hover,
-.filtre-btn.active {
-    background: var(--primary);
-    border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-}
-
-/* Grille des Boissons */
-.boissons-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 25px;
-    margin-bottom: 120px;
-}
-
-.boisson-card {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    border-radius: 20px;
-    padding: 25px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    position: relative;
-    overflow: hidden;
-}
-
-.boisson-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    transition: left 0.5s;
-}
-
-.boisson-card:hover::before {
-    left: 100%;
-}
-
-.boisson-card:hover {
-    transform: translateY(-10px) scale(1.02);
-    border-color: var(--primary);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-}
-
-.boisson-card.selected {
-    border-color: var(--success);
-    background: rgba(16, 185, 129, 0.1);
-    transform: scale(1.05);
-}
-
-.promotion-badge {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: linear-gradient(45deg, #f59e0b, #f97316);
-    color: white;
-    padding: 5px 12px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: bold;
-}
-
-.boisson-image {
-    width: 140px;
-    height: 140px;
-    margin: 0 auto 20px;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
-}
-
-.boisson-card:hover .boisson-image {
-    transform: scale(1.1) rotate(5deg);
-}
-
-.boisson-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.boisson-nom {
-    font-size: 1.4rem;
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: white;
-}
-
-.boisson-categorie {
-    color: #cbd5e1;
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-}
-
-.boisson-prix {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #10b981;
-    margin-bottom: 5px;
-}
-
-.boisson-taille {
-    color: #94a3b8;
-    font-size: 0.9rem;
-}
-
-/* Panier Flottant */
-.panier-flottant {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 350px;
-    background: rgba(31, 41, 55, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    transform: translateY(100px);
-    opacity: 0;
-    transition: all 0.3s ease;
-}
-
-.panier-flottant.visible {
-    transform: translateY(0);
-    opacity: 1;
-}
-
-.panier-header {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 20px;
-    border-radius: 20px 20px 0 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.panier-header h3 {
-    color: white;
-    margin: 0;
-}
-
-.badge {
-    background: var(--primary);
-    color: white;
-    padding: 5px 12px;
-    border-radius: 15px;
-    font-size: 0.9rem;
-    font-weight: bold;
-}
-
-.panier-content {
-    padding: 20px;
-}
-
-.panier-items {
-    max-height: 200px;
-    overflow-y: auto;
-    margin-bottom: 20px;
-}
-
-.panier-vide {
-    text-align: center;
-    color: #94a3b8;
-    font-style: italic;
-    padding: 20px;
-}
-
-.item-panier {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    margin-bottom: 10px;
-    animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-    from { opacity: 0; transform: translateX(-20px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-
-.btn-retirer {
-    background: var(--danger);
-    color: white;
-    border: none;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.panier-total {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    font-size: 1.2rem;
-}
-
-.panier-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.btn-payer {
-    flex: 1;
-    background: linear-gradient(45deg, var(--success), #059669);
-    color: white;
-    border: none;
-    padding: 15px;
-    border-radius: 15px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-payer:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(16, 185, 129, 0.4);
-}
-
-.btn-payer:disabled {
-    background: var(--gray);
-    cursor: not-allowed;
-    transform: none;
-}
-
-.btn-vider {
-    background: var(--danger);
-    color: white;
-    border: none;
-    padding: 15px 20px;
-    border-radius: 15px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-vider:hover {
-    transform: translateY(-2px);
-}
-
-/* Modal Paiement */
-.modal-paiement {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-    padding: 20px;
-}
-
-.modal-content {
-    background: linear-gradient(135deg, #1f2937, #374151);
-    border-radius: 25px;
-    padding: 30px;
-    max-width: 500px;
-    width: 100%;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
-    animation: modalSlideIn 0.3s ease;
-}
-
-@keyframes modalSlideIn {
-    from { transform: scale(0.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-}
-
-.modal-header h2 {
-    background: linear-gradient(45deg, #fff, #a5b4fc);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.btn-fermer {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 2rem;
-    cursor: pointer;
-    padding: 5px;
-}
-
-.qr-section {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.qr-container {
-    background: white;
-    padding: 20px;
-    border-radius: 15px;
-    display: inline-block;
-    margin-bottom: 20px;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-}
-
-.transaction-info {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.info-card {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 15px;
-    border-radius: 10px;
-    text-align: center;
-}
-
-.info-card h4 {
-    color: #cbd5e1;
-    font-size: 0.9rem;
-    margin-bottom: 5px;
-}
-
-.transaction-id {
-    font-family: monospace;
-    font-weight: bold;
-    color: var(--primary);
-}
-
-.montant {
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: var(--success);
-}
-
-.timer {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--warning);
-}
-
-.instructions {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 20px;
-}
-
-.instruction-item {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 15px;
-}
-
-.instruction-item:last-child {
-    margin-bottom: 0;
-}
-
-.instruction-item .icon {
-    font-size: 1.5rem;
-}
-
-.statut-paiement {
-    background: rgba(245, 158, 11, 0.2);
-    padding: 20px;
-    border-radius: 15px;
-    text-align: center;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-}
-
-.statut-paiement.success {
-    background: rgba(16, 185, 129, 0.2);
-    color: var(--success);
-}
-
-.statut-paiement.error {
-    background: rgba(239, 68, 68, 0.2);
-    color: var(--danger);
-}
-
-.loader {
-    width: 20px;
-    height: 20px;
-    border: 2px solid #ffffff;
-    border-bottom-color: transparent;
-    border-radius: 50%;
-    animation: rotation 1s linear infinite;
-}
-
-@keyframes rotation {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.btn-annuler {
-    width: 100%;
-    background: var(--danger);
-    color: white;
-    border: none;
-    padding: 15px;
-    border-radius: 15px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-annuler:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(239, 68, 68, 0.4);
-}
-
-/* Notification Vocale */
-.notification-vocale {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(31, 41, 55, 0.95);
-    backdrop-filter: blur(20px);
-    padding: 30px 40px;
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-    z-index: 3000;
-    display: none;
-    animation: notificationPop 0.3s ease;
-}
-
-@keyframes notificationPop {
-    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-}
-
-.notification-content {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    text-align: center;
-}
-
-.notification-icon {
-    font-size: 2.5rem;
-    animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-    40% { transform: translateY(-10px); }
-    60% { transform: translateY(-5px); }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .container {
-        padding: 15px;
+class DistributeurModerne {
+    constructor() {
+        this.panier = [];
+        this.transactionEnCours = null;
+        this.timerExpiration = null;
+        this.API_URL = CONFIG.API_URL;
+        this.estConnecte = false;
+        this.boissons = [];
+        
+        this.init();
     }
     
-    .header-content {
-        flex-direction: column;
-        text-align: center;
+    async init() {
+        await this.testerConnexionServeur();
+        await this.chargerBoissons();
+        this.afficherBoissons();
+        this.chargerSolde();
+        this.setupEventListeners();
+        
+        setInterval(() => this.verifierStatutTransaction(), 2000);
+        setInterval(() => this.testerConnexionServeur(), 30000);
+        
+        this.afficherMessageVocal('🚀 Système distribiteur prêt!');
     }
     
-    .hero h2 {
-        font-size: 2rem;
+    async testerConnexionServeur() {
+        try {
+            const response = await fetch(`${this.API_URL}/api/health`);
+            const result = await response.json();
+            
+            if (result.status === 'OK') {
+                this.estConnecte = true;
+                this.mettreAJourStatutConnexion('connecte');
+                return true;
+            }
+        } catch (error) {
+            this.estConnecte = false;
+            this.mettreAJourStatutConnexion('erreur');
+        }
+        return false;
     }
     
-    .boissons-grid {
-        grid-template-columns: 1fr;
+    mettreAJourStatutConnexion(statut) {
+        const element = document.getElementById('statut-connexion');
+        const lumiere = element.querySelector('.statut-lumiere');
+        
+        if (statut === 'connecte') {
+            lumiere.style.background = '#10b981';
+            element.querySelector('span').textContent = 'En ligne';
+        } else {
+            lumiere.style.background = '#ef4444';
+            element.querySelector('span').textContent = 'Hors ligne';
+        }
     }
     
-    .panier-flottant {
-        width: calc(100% - 40px);
-        right: 20px;
-        left: 20px;
+    async chargerBoissons() {
+        try {
+            const response = await fetch(`${this.API_URL}/api/boissons`);
+            const result = await response.json();
+            
+            if (result.success) {
+                this.boissons = result.data;
+            }
+        } catch (error) {
+            console.error('Erreur chargement boissons:', error);
+        }
     }
     
-    .transaction-info {
-        grid-template-columns: 1fr;
+    afficherBoissons() {
+        const grid = document.getElementById('boissons-grid');
+        grid.innerHTML = '';
+        
+        this.boissons.forEach(boisson => {
+            const card = document.createElement('div');
+            card.className = 'boisson-card';
+            card.setAttribute('data-categorie', boisson.categorie);
+            card.innerHTML = `
+                ${boisson.promotion ? '<div class="promotion-badge">🔥 PROMO</div>' : ''}
+                <div class="boisson-image">
+                    <img src="${boisson.image}" alt="${boisson.nom}" loading="lazy">
+                </div>
+                <div class="boisson-nom">${boisson.nom}</div>
+                <div class="boisson-categorie">${boisson.categorie}</div>
+                <div class="boisson-prix">${boisson.prix} FCFA</div>
+                <div class="boisson-taille">${boisson.taille}</div>
+            `;
+            
+            card.addEventListener('click', () => this.ajouterAuPanier(boisson));
+            grid.appendChild(card);
+        });
+        
+        this.setupFiltres();
+    }
+    
+    setupFiltres() {
+        document.querySelectorAll('.filtre-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                const categorie = e.target.getAttribute('data-categorie');
+                this.filtrerBoissons(categorie);
+            });
+        });
+    }
+    
+    filtrerBoissons(categorie) {
+        const cards = document.querySelectorAll('.boisson-card');
+        cards.forEach(card => {
+            if (categorie === 'tous' || card.getAttribute('data-categorie') === categorie) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+    
+    ajouterAuPanier(boisson) {
+        if (this.panier.length >= 2) {
+            this.afficherMessageVocal('❌ Maximum 2 boissons autorisées');
+            return;
+        }
+        
+        if (this.panier.find(item => item.id === boisson.id)) {
+            this.afficherMessageVocal('⚠️ Cette boisson est déjà sélectionnée');
+            return;
+        }
+        
+        this.panier.push(boisson);
+        this.mettreAJourPanier();
+        this.afficherMessageVocal(`✅ ${boisson.nom} ajoutée au panier`);
+    }
+    
+    retirerDuPanier(boissonId) {
+        this.panier = this.panier.filter(item => item.id !== boissonId);
+        this.mettreAJourPanier();
+    }
+    
+    mettreAJourPanier() {
+        const panierItems = document.getElementById('panier-items');
+        const totalElement = document.getElementById('total-panier');
+        const nombreElement = document.getElementById('nombre-boissons');
+        const panierFlottant = document.getElementById('panier-flottant');
+        
+        if (this.panier.length === 0) {
+            panierItems.innerHTML = '<div class="panier-vide">Aucune boisson sélectionnée</div>';
+            panierFlottant.classList.remove('visible');
+        } else {
+            panierItems.innerHTML = '';
+            this.panier.forEach(boisson => {
+                const item = document.createElement('div');
+                item.className = 'item-panier';
+                item.innerHTML = `
+                    <div>
+                        <strong>${boisson.nom}</strong>
+                        <div style="font-size: 0.9rem; color: #94a3b8;">${boisson.prix} FCFA</div>
+                    </div>
+                    <button class="btn-retirer" onclick="distributeur.retirerDuPanier(${boisson.id})">✕</button>
+                `;
+                panierItems.appendChild(item);
+            });
+            panierFlottant.classList.add('visible');
+        }
+        
+        const total = this.panier.reduce((sum, boisson) => sum + boisson.prix, 0);
+        totalElement.textContent = `${total} FCFA`;
+        nombreElement.textContent = this.panier.length;
+        
+        this.mettreAJourBoutons();
+    }
+    
+    mettreAJourBoutons() {
+        const btnPayer = document.getElementById('btn-payer');
+        btnPayer.disabled = this.panier.length === 0 || !this.estConnecte;
+    }
+    
+    setupEventListeners() {
+        document.getElementById('btn-payer').addEventListener('click', () => this.demarrerPaiement());
+        document.getElementById('btn-vider').addEventListener('click', () => this.viderPanier());
+        document.getElementById('fermer-modal').addEventListener('click', () => this.fermerModal());
+        document.getElementById('annuler-paiement').addEventListener('click', () => this.annulerPaiement());
+    }
+    
+    async demarrerPaiement() {
+        if (!this.estConnecte) {
+            this.afficherMessageVocal('❌ Serveur non connecté');
+            return;
+        }
+        
+        const total = this.panier.reduce((sum, boisson) => sum + boisson.prix, 0);
+        
+        try {
+            const response = await fetch(`${this.API_URL}/api/transaction`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    montant: total,
+                    boissons: this.panier
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.transactionEnCours = result.data;
+                this.afficherModalPaiement(result.data);
+                this.afficherMessageVocal(MESSAGES_VOCAUX.paiement);
+            }
+        } catch (error) {
+            this.afficherMessageVocal(MESSAGES_VOCAUX.erreur);
+        }
+    }
+    
+    afficherModalPaiement(transaction) {
+        const modal = document.getElementById('modal-paiement');
+        const qrCodeElement = document.getElementById('qr-code');
+        
+        document.getElementById('transaction-id').textContent = transaction.id;
+        document.getElementById('montant-transaction').textContent = `${transaction.montant} FCFA`;
+        
+        // Générer QR code
+        qrCodeElement.innerHTML = '';
+        const qr = qrcode(0, 'L');
+        qr.addData(JSON.stringify({
+            transactionId: transaction.id,
+            montant: transaction.montant,
+            apiUrl: this.API_URL
+        }));
+        qr.make();
+        qrCodeElement.innerHTML = qr.createImgTag(4);
+        
+        modal.style.display = 'flex';
+        this.demarrerTimerExpiration();
+    }
+    
+    fermerModal() {
+        document.getElementById('modal-paiement').style.display = 'none';
+        this.annulerPaiement();
+    }
+    
+    demarrerTimerExpiration() {
+        if (this.timerExpiration) clearInterval(this.timerExpiration);
+        
+        const timerElement = document.getElementById('expiration-timer');
+        let tempsRestant = 600;
+        
+        this.timerExpiration = setInterval(() => {
+            tempsRestant--;
+            const minutes = Math.floor(tempsRestant / 60);
+            const secondes = tempsRestant % 60;
+            timerElement.textContent = `${minutes}:${secondes.toString().padStart(2, '0')}`;
+            
+            if (tempsRestant <= 0) {
+                clearInterval(this.timerExpiration);
+                this.transactionExpiree();
+            }
+        }, 1000);
+    }
+    
+    transactionExpiree() {
+        const statutElement = document.getElementById('statut-paiement');
+        statutElement.innerHTML = '❌ Transaction expirée';
+        statutElement.className = 'statut-paiement error';
+    }
+    
+    async verifierStatutTransaction() {
+        if (!this.transactionEnCours || !this.estConnecte) return;
+        
+        try {
+            const response = await fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}`);
+            const result = await response.json();
+            
+            if (result.success && result.data.statut === 'paye') {
+                const statutElement = document.getElementById('statut-paiement');
+                statutElement.innerHTML = '✅ Paiement réussi!';
+                statutElement.className = 'statut-paiement success';
+                
+                this.afficherMessageVocal(MESSAGES_VOCAUX.reussite);
+                
+                if (this.timerExpiration) clearInterval(this.timerExpiration);
+                
+                setTimeout(() => {
+                    this.reinitialiserApresPaiement();
+                }, 4000);
+            }
+        } catch (error) {
+            console.error('Erreur vérification statut:', error);
+        }
+    }
+    
+    reinitialiserApresPaiement() {
+        this.panier = [];
+        this.transactionEnCours = null;
+        this.timerExpiration = null;
+        
+        const modal = document.getElementById('modal-paiement');
+        modal.style.display = 'none';
+        
+        document.getElementById('statut-paiement').className = 'statut-paiement';
+        document.getElementById('statut-paiement').innerHTML = '<div class="loader"></div><span>En attente de paiement...</span>';
+        
+        this.mettreAJourPanier();
+        this.afficherMessageVocal('🎉 Commande livrée! Merci de votre achat.');
+    }
+    
+    viderPanier() {
+        this.panier = [];
+        this.mettreAJourPanier();
+        this.afficherMessageVocal('🗑️ Panier vidé');
+    }
+    
+    annulerPaiement() {
+        if (this.transactionEnCours && this.estConnecte) {
+            fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}/annuler`, {
+                method: 'POST'
+            });
+        }
+        
+        if (this.timerExpiration) clearInterval(this.timerExpiration);
+        this.reinitialiserApresPaiement();
+    }
+    
+    async chargerSolde() {
+        try {
+            const response = await fetch(`${this.API_URL}/api/solde/distributeur`);
+            const result = await response.json();
+            
+            if (result.success) {
+                document.getElementById('solde-distributeur').textContent = `${result.solde} FCFA`;
+            }
+        } catch (error) {
+            console.error('Erreur chargement solde:', error);
+        }
+    }
+    
+    afficherMessageVocal(message) {
+        const notification = document.getElementById('notification-vocale');
+        const messageElement = document.getElementById('message-vocal');
+        
+        messageElement.textContent = message;
+        notification.style.display = 'block';
+        
+        // Synthèse vocale
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.lang = 'fr-FR';
+            utterance.rate = 1.0;
+            speechSynthesis.speak(utterance);
+        }
+        
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 3000);
     }
 }
+
+// Initialisation
+const distributeur = new DistributeurModerne();
