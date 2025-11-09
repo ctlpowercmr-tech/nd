@@ -1,5 +1,5 @@
 const CONFIG = {
-  API_URL: 'https://ns-fjzl.onrender.com' // Remplacez par votre URL Render
+  API_URL: 'https://ns-fjzl.onrender.com' // Votre URL Render
 };
 
 const MESSAGES_VOCAUX = {
@@ -8,5 +8,3 @@ const MESSAGES_VOCAUX = {
   reussite: 'Paiement réussi! Votre commande sera prête dans 4 secondes',
   erreur: 'Erreur de connexion au serveur'
 };
-
-
