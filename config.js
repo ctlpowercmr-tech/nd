@@ -1,5 +1,5 @@
 const CONFIG = {
-  API_URL: 'https://ns-0apc.onrender.com' // Votre URL Render
+  API_URL: 'https://ns-1-72e7.onrender.com' // Votre URL Render
 };
 
 const MESSAGES_VOCAUX = {
@@ -8,4 +8,5 @@ const MESSAGES_VOCAUX = {
   reussite: 'Paiement réussi! Votre commande sera prête dans 4 secondes',
   erreur: 'Erreur de connexion au serveur'
 };
+
 
