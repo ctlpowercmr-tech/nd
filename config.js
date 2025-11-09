@@ -1,5 +1,5 @@
 const CONFIG = {
-  API_URL: 'https://votre-api.render.com' // Remplacez par votre URL Render
+  API_URL: 'https://ns-rtq8.onrender.com' // Remplacez par votre URL Render
 };
 
 const MESSAGES_VOCAUX = {
@@ -8,3 +8,4 @@ const MESSAGES_VOCAUX = {
   reussite: 'Paiement réussi! Votre commande sera prête dans 4 secondes',
   erreur: 'Erreur de connexion au serveur'
 };
+
