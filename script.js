@@ -63,6 +63,45 @@ class DistributeurModerne {
             }
         } catch (error) {
             console.error('Erreur chargement boissons:', error);
+            // Fallback si l'API ne répond pas
+            this.boissons = [
+                {
+                    id: 1,
+                    nom: "Coca-Cola Original",
+                    prix: 500,
+                    image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400&h=400&fit=crop",
+                    categorie: "Soda",
+                    taille: "33cl",
+                    promotion: false
+                },
+                {
+                    id: 2,
+                    nom: "Pepsi Max",
+                    prix: 500,
+                    image: "https://images.unsplash.com/photo-1624555130581-1d9cca1a1a71?w=400&h=400&fit=crop",
+                    categorie: "Soda",
+                    taille: "33cl",
+                    promotion: false
+                },
+                {
+                    id: 3,
+                    nom: "Fanta Orange",
+                    prix: 450,
+                    image: "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400&h=400&fit=crop",
+                    categorie: "Soda",
+                    taille: "33cl",
+                    promotion: true
+                },
+                {
+                    id: 4,
+                    nom: "Sprite Citron",
+                    prix: 450,
+                    image: "https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=400&h=400&fit=crop",
+                    categorie: "Soda",
+                    taille: "33cl",
+                    promotion: false
+                }
+            ];
         }
     }
     
@@ -204,10 +243,12 @@ class DistributeurModerne {
             if (result.success) {
                 this.transactionEnCours = result.data;
                 this.afficherModalPaiement(result.data);
-                this.afficherMessageVocal(MESSAGES_VOCAUX.paiement);
+                this.afficherMessageVocal("Veuillez scanner le QR code avec votre téléphone ou utiliser cet ID de transaction");
+            } else {
+                this.afficherMessageVocal('❌ Erreur: ' + result.error);
             }
         } catch (error) {
-            this.afficherMessageVocal(MESSAGES_VOCAUX.erreur);
+            this.afficherMessageVocal('❌ Erreur de connexion au serveur');
         }
     }
     
@@ -218,19 +259,61 @@ class DistributeurModerne {
         document.getElementById('transaction-id').textContent = transaction.id;
         document.getElementById('montant-transaction').textContent = `${transaction.montant} FCFA`;
         
-        // Générer QR code
-        qrCodeElement.innerHTML = '';
-        const qr = qrcode(0, 'L');
-        qr.addData(JSON.stringify({
-            transactionId: transaction.id,
-            montant: transaction.montant,
-            apiUrl: this.API_URL
-        }));
-        qr.make();
-        qrCodeElement.innerHTML = qr.createImgTag(4);
+        // CORRECTION: Génération QR code avec la bonne méthode
+        this.genererQRCode(transaction, qrCodeElement);
         
         modal.style.display = 'flex';
         this.demarrerTimerExpiration();
+    }
+    
+    genererQRCode(transaction, element) {
+        // Nettoyer l'élément
+        element.innerHTML = '';
+        
+        // Données à encoder
+        const qrData = JSON.stringify({
+            transactionId: transaction.id,
+            montant: transaction.montant,
+            apiUrl: this.API_URL,
+            timestamp: Date.now()
+        });
+        
+        console.log('Génération QR code avec données:', qrData);
+        
+        try {
+            // Utiliser la librairie QRCode correctement
+            QRCode.toCanvas(element, qrData, {
+                width: 200,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                }
+            }, function(error) {
+                if (error) {
+                    console.error('Erreur génération QR code:', error);
+                    // Fallback: afficher l'ID
+                    element.innerHTML = `
+                        <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; color: black;">
+                            <h3 style="margin: 0 0 10px 0;">ID Transaction</h3>
+                            <p style="font-size: 24px; font-weight: bold; margin: 0;">${transaction.id}</p>
+                            <p style="margin: 10px 0 0 0;">Montant: ${transaction.montant} FCFA</p>
+                        </div>
+                    `;
+                }
+            });
+        } catch (error) {
+            console.error('Erreur génération QR code:', error);
+            // Fallback simple
+            element.innerHTML = `
+                <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; color: black;">
+                    <h3 style="margin: 0 0 10px 0;">ID Transaction</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin: 0 0 10px 0;">${transaction.id}</p>
+                    <p style="margin: 0 0 10px 0;">Montant: ${transaction.montant} FCFA</p>
+                    <p style="margin: 0; font-size: 14px; color: #666;">Entrez cet ID dans l'application mobile</p>
+                </div>
+            `;
+        }
     }
     
     fermerModal() {
@@ -275,7 +358,7 @@ class DistributeurModerne {
                 statutElement.innerHTML = '✅ Paiement réussi!';
                 statutElement.className = 'statut-paiement success';
                 
-                this.afficherMessageVocal(MESSAGES_VOCAUX.reussite);
+                this.afficherMessageVocal("Paiement réussi! Votre commande sera prête dans 4 secondes");
                 
                 if (this.timerExpiration) clearInterval(this.timerExpiration);
                 
@@ -313,7 +396,7 @@ class DistributeurModerne {
         if (this.transactionEnCours && this.estConnecte) {
             fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}/annuler`, {
                 method: 'POST'
-            });
+            }).catch(error => console.error('Erreur annulation:', error));
         }
         
         if (this.timerExpiration) clearInterval(this.timerExpiration);
@@ -345,6 +428,7 @@ class DistributeurModerne {
             const utterance = new SpeechSynthesisUtterance(message);
             utterance.lang = 'fr-FR';
             utterance.rate = 1.0;
+            utterance.pitch = 1.0;
             speechSynthesis.speak(utterance);
         }
         
