@@ -3,137 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distributeur Automatique Premium</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>DISTRIBUTEUR 3.0 - Boissons Premium</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Header -->
-        <header class="app-header">
-            <div class="header-content">
-                <div class="logo">
-                    <i class="fas fa-cube"></i>
-                    <h1>DISTRIBUTEUR PREMIUM</h1>
+    <div class="cyber-container">
+        <!-- Header Futuriste -->
+        <header class="cyber-header">
+            <div class="hologram-effect"></div>
+            <h1 class="cyber-title">DISTRIBUTEUR <span class="cyber-accent">3.0</span></h1>
+            <div class="status-panel">
+                <div class="status-item" id="status-connexion">
+                    <div class="status-led"></div>
+                    <span>EN LIGNE</span>
                 </div>
-                <div class="header-info">
-                    <div class="status-online">
-                        <i class="fas fa-wifi"></i>
-                        <span>En ligne</span>
-                    </div>
-                    <div class="solde-distributeur">
-                        <i class="fas fa-coins"></i>
-                        <span id="solde-distributeur">0</span> FCFA
-                    </div>
+                <div class="status-item">
+                    <div class="status-led active"></div>
+                    <span>SYSTÈME ACTIF</span>
                 </div>
             </div>
         </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Section Produits -->
-            <section class="produits-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-wine-bottle"></i> NOS BOISSONS</h2>
-                    <div class="filtres">
-                        <button class="filtre-btn active" data-categorie="all">Tous</button>
-                        <button class="filtre-btn" data-categorie="Soda">Sodas</button>
-                        <button class="filtre-btn" data-categorie="Eau">Eaux</button>
-                        <button class="filtre-btn" data-categorie="Jus">Jus</button>
-                    </div>
-                </div>
+        <!-- Navigation Holographique -->
+        <nav class="cyber-nav">
+            <div class="nav-glow"></div>
+            <button class="nav-btn active" data-section="boissons">BOISSONS</button>
+            <button class="nav-btn" data-section="panier">PANIER</button>
+            <button class="nav-btn" data-section="paiement">PAIEMENT</button>
+        </nav>
 
+        <main class="cyber-main">
+            <!-- Section Boissons -->
+            <section id="boissons-section" class="section active">
+                <h2 class="section-title">SÉLECTIONNEZ VOS BOISSONS</h2>
                 <div class="produits-grid" id="produits-grid">
                     <!-- Produits chargés dynamiquement -->
                 </div>
             </section>
 
-            <!-- Panier -->
-            <section class="panier-section">
-                <div class="panier-header">
-                    <h3><i class="fas fa-shopping-cart"></i> VOTRE PANIER</h3>
-                    <div class="panier-stats">
-                        <span id="nombre-articles">0 article(s)</span>
-                        <span id="total-panier">0 FCFA</span>
+            <!-- Section Panier -->
+            <section id="panier-section" class="section">
+                <h2 class="section-title">VOTRE SÉLECTION</h2>
+                <div class="panier-container">
+                    <div class="panier-items" id="panier-items">
+                        <div class="panier-vide">Aucun produit sélectionné</div>
                     </div>
-                </div>
-                
-                <div class="panier-items" id="panier-items">
-                    <div class="panier-vide">
-                        <i class="fas fa-cart-arrow-down"></i>
-                        <p>Votre panier est vide</p>
-                        <small>Sélectionnez jusqu'à 2 boissons</small>
+                    <div class="panier-total">
+                        <span>TOTAL:</span>
+                        <span id="total-panier">0</span>
+                        <span>FCFA</span>
                     </div>
-                </div>
-
-                <div class="panier-actions">
-                    <button id="btn-vider" class="btn-secondaire" disabled>
-                        <i class="fas fa-trash"></i> Vider
-                    </button>
-                    <button id="btn-payer" class="btn-primaire" disabled>
-                        <i class="fas fa-qrcode"></i> Payer Maintenant
+                    <button class="cyber-btn primary" id="btn-payer">
+                        <span class="btn-glow"></span>
+                        PROCÉDER AU PAIEMENT
                     </button>
                 </div>
             </section>
 
             <!-- Section Paiement -->
-            <section class="paiement-section" id="paiement-section">
+            <section id="paiement-section" class="section">
+                <h2 class="section-title">FINALISATION DE COMMANDE</h2>
                 <div class="paiement-container">
-                    <div class="paiement-header">
-                        <h3><i class="fas fa-credit-card"></i> PAIEMENT</h3>
-                        <button id="btn-fermer-paiement" class="btn-fermer">
-                            <i class="fas fa-times"></i>
-                        </button>
+                    <div class="qr-hologram">
+                        <div class="hologram-base"></div>
+                        <div id="qr-code" class="qr-code"></div>
+                        <div class="scan-glow"></div>
                     </div>
-
-                    <div class="qr-container">
-                        <div class="qr-code-wrapper">
-                            <div id="qr-code" class="qr-code"></div>
-                            <div class="qr-overlay">
-                                <div class="qr-animation"></div>
-                            </div>
+                    
+                    <div class="transaction-info">
+                        <div class="info-card">
+                            <div class="info-label">ID TRANSACTION</div>
+                            <div class="info-value" id="transaction-id">-</div>
                         </div>
-                        
-                        <div class="transaction-info">
-                            <div class="info-card">
-                                <div class="info-item">
-                                    <span class="info-label">ID Transaction:</span>
-                                    <span id="transaction-id" class="info-value">-</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Montant:</span>
-                                    <span id="montant-transaction" class="info-value prix">0 FCFA</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Expire dans:</span>
-                                    <span id="expiration-timer" class="info-value timer">10:00</span>
-                                </div>
-                            </div>
+                        <div class="info-card">
+                            <div class="info-label">MONTANT TOTAL</div>
+                            <div class="info-value" id="montant-transaction">0 FCFA</div>
                         </div>
-
-                        <div class="instructions">
-                            <i class="fas fa-mobile-alt"></i>
-                            <p>Scannez le QR code avec votre application mobile ou entrez l'ID de transaction</p>
+                        <div class="info-card">
+                            <div class="info-label">TEMPS RESTANT</div>
+                            <div class="info-value timer" id="expiration-timer">10:00</div>
                         </div>
                     </div>
 
                     <div class="statut-paiement" id="statut-paiement">
-                        <div class="statut-content">
-                            <div class="loader"></div>
-                            <span>En attente de paiement...</span>
-                        </div>
+                        <div class="pulse-loader"></div>
+                        <span>EN ATTENTE DE PAIEMENT...</span>
+                    </div>
+
+                    <div class="actions-paiement">
+                        <button class="cyber-btn secondary" id="annuler-paiement">
+                            ANNULER LA TRANSACTION
+                        </button>
                     </div>
                 </div>
             </section>
         </main>
 
         <!-- Audio pour les messages vocaux -->
-        <audio id="audio-selection" preload="auto">
-            <source src="/sounds/selection.mp3" type="audio/mpeg">
+        <audio id="audio-scan" preload="auto">
+            <source src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3" type="audio/mpeg">
         </audio>
-        <audio id="audio-paiement" preload="auto">
-            <source src="/sounds/paiement.mp3" type="audio/mpeg">
+        <audio id="audio-success" preload="auto">
+            <source src="https://assets.mixkit.co/sfx/preview/mixkit-success-bell-900.mp3" type="audio/mpeg">
         </audio>
     </div>
 
