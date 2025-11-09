@@ -355,4 +355,169 @@ class DistributeurModerne {
             });
         } catch (error) {
             console.error('❌ Erreur génération QR:', error);
-            element.innerHTML
+            element.innerHTML = `
+                <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; color: black;">
+                    <h3 style="margin: 0 0 10px 0;">ID: ${transaction.id}</h3>
+                    <p style="margin: 0;">${transaction.montant} FCFA</p>
+                </div>
+            `;
+        }
+    }
+    
+    fermerModal() {
+        const modal = document.getElementById('modal-paiement');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        this.annulerPaiement();
+    }
+    
+    demarrerTimerExpiration() {
+        if (this.timerExpiration) clearInterval(this.timerExpiration);
+        
+        const timerElement = document.getElementById('expiration-timer');
+        if (!timerElement) return;
+        
+        let tempsRestant = 600;
+        
+        this.timerExpiration = setInterval(() => {
+            tempsRestant--;
+            const minutes = Math.floor(tempsRestant / 60);
+            const secondes = tempsRestant % 60;
+            timerElement.textContent = `${minutes}:${secondes.toString().padStart(2, '0')}`;
+            
+            if (tempsRestant <= 0) {
+                clearInterval(this.timerExpiration);
+                this.transactionExpiree();
+            }
+        }, 1000);
+    }
+    
+    transactionExpiree() {
+        const statutElement = document.getElementById('statut-paiement');
+        if (statutElement) {
+            statutElement.innerHTML = '❌ Transaction expirée';
+            statutElement.className = 'statut-paiement error';
+        }
+    }
+    
+    async verifierStatutTransaction() {
+        if (!this.transactionEnCours || !this.estConnecte) return;
+        
+        try {
+            const response = await fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}`);
+            const result = await response.json();
+            
+            if (result.success && result.data.statut === 'paye') {
+                const statutElement = document.getElementById('statut-paiement');
+                if (statutElement) {
+                    statutElement.innerHTML = '✅ Paiement réussi!';
+                    statutElement.className = 'statut-paiement success';
+                }
+                
+                this.afficherMessageVocal("Paiement réussi! Votre commande sera prête dans 4 secondes");
+                
+                if (this.timerExpiration) clearInterval(this.timerExpiration);
+                
+                setTimeout(() => {
+                    this.reinitialiserApresPaiement();
+                }, 4000);
+            }
+        } catch (error) {
+            console.error('Erreur vérification statut:', error);
+        }
+    }
+    
+    reinitialiserApresPaiement() {
+        this.panier = [];
+        this.transactionEnCours = null;
+        
+        if (this.timerExpiration) {
+            clearInterval(this.timerExpiration);
+            this.timerExpiration = null;
+        }
+        
+        const modal = document.getElementById('modal-paiement');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        
+        const statutElement = document.getElementById('statut-paiement');
+        if (statutElement) {
+            statutElement.className = 'statut-paiement';
+            statutElement.innerHTML = '<div class="loader"></div><span>En attente de paiement...</span>';
+        }
+        
+        this.mettreAJourPanier();
+        this.chargerSolde();
+        this.afficherMessageVocal('Commande livrée! Merci de votre achat.');
+    }
+    
+    viderPanier() {
+        this.panier = [];
+        this.mettreAJourPanier();
+        this.afficherMessageVocal('Panier vidé');
+    }
+    
+    annulerPaiement() {
+        if (this.transactionEnCours && this.estConnecte) {
+            fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}/annuler`, {
+                method: 'POST'
+            }).catch(error => console.error('Erreur annulation:', error));
+        }
+        
+        if (this.timerExpiration) {
+            clearInterval(this.timerExpiration);
+            this.timerExpiration = null;
+        }
+        
+        this.reinitialiserApresPaiement();
+    }
+    
+    async chargerSolde() {
+        try {
+            const response = await fetch(`${this.API_URL}/api/solde/distributeur`);
+            const result = await response.json();
+            
+            if (result.success) {
+                const soldeElement = document.getElementById('solde-distributeur');
+                if (soldeElement) {
+                    soldeElement.textContent = `${result.solde} FCFA`;
+                }
+            }
+        } catch (error) {
+            console.error('Erreur chargement solde:', error);
+        }
+    }
+    
+    afficherMessageVocal(message) {
+        const notification = document.getElementById('notification-vocale');
+        const messageElement = document.getElementById('message-vocal');
+        
+        if (!notification || !messageElement) {
+            console.log('🔊 Message vocal:', message);
+            return;
+        }
+        
+        messageElement.textContent = message;
+        notification.style.display = 'block';
+        
+        // Synthèse vocale
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.lang = 'fr-FR';
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            speechSynthesis.speak(utterance);
+        }
+        
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 3000);
+    }
+}
+
+// Initialisation quand la page est chargée
+document.addEventListener('DOMContentLoaded', function() {
+    window.distributeur = new DistributeurModerne();
+});
