@@ -1,66 +1,79 @@
-class DistributeurApp {
+class DistributeurModerne {
     constructor() {
         this.panier = [];
-        this.produits = [];
         this.transactionEnCours = null;
         this.timerExpiration = null;
         this.API_URL = CONFIG.API_URL;
         this.estConnecte = false;
+        this.produits = [];
         
         this.init();
     }
     
     async init() {
+        console.log('🚀 Initialisation Distributeur 3.0');
         await this.testerConnexionServeur();
         await this.chargerProduits();
-        this.chargerSolde();
         this.setupEventListeners();
+        this.setupNavigation();
         
-        setInterval(() => this.verifierStatutTransaction(), 2000);
         setInterval(() => this.testerConnexionServeur(), 30000);
+        setInterval(() => this.verifierStatutTransaction(), 2000);
+        
+        this.jouerMessageVocal('Système distributeur prêt. Sélectionnez vos boissons.');
     }
     
     async testerConnexionServeur() {
         try {
             const response = await fetch(`${this.API_URL}/api/health`);
-            if (response.ok) {
-                this.estConnecte = true;
-                this.mettreAJourStatutConnexion(true);
-                return true;
-            }
-            throw new Error('Serveur non disponible');
+            if (!response.ok) throw new Error('Serveur non disponible');
+            
+            const result = await response.json();
+            this.estConnecte = result.status === 'OK';
+            this.mettreAJourStatutConnexion(this.estConnecte ? 'connecte' : 'erreur');
+            
+            return this.estConnecte;
         } catch (error) {
+            console.error('❌ Erreur connexion serveur:', error);
             this.estConnecte = false;
-            this.mettreAJourStatutConnexion(false);
+            this.mettreAJourStatutConnexion('erreur', error.message);
             return false;
         }
     }
     
-    mettreAJourStatutConnexion(connecte) {
-        const statusElement = document.querySelector('.status-online');
-        if (statusElement) {
-            if (connecte) {
-                statusElement.innerHTML = '<i class="fas fa-wifi"></i><span>En ligne</span>';
-                statusElement.style.background = 'rgba(16, 185, 129, 0.2)';
-            } else {
-                statusElement.innerHTML = '<i class="fas fa-wifi-slash"></i><span>Hors ligne</span>';
-                statusElement.style.background = 'rgba(239, 68, 68, 0.2)';
-            }
+    mettreAJourStatutConnexion(statut) {
+        const element = document.getElementById('status-connexion');
+        if (!element) return;
+        
+        const led = element.querySelector('.status-led');
+        const text = element.querySelector('span');
+        
+        if (statut === 'connecte') {
+            led.style.background = 'var(--cyber-green)';
+            led.style.boxShadow = '0 0 10px var(--cyber-green)';
+            text.textContent = 'EN LIGNE';
+        } else {
+            led.style.background = '#ff4757';
+            led.style.boxShadow = '0 0 10px #ff4757';
+            text.textContent = 'HORS LIGNE';
         }
     }
     
     async chargerProduits() {
         try {
             const response = await fetch(`${this.API_URL}/api/produits`);
-            const result = await response.json();
-            
-            if (result.success) {
-                this.produits = result.produits;
-                this.afficherProduits();
+            if (response.ok) {
+                const result = await response.json();
+                this.produits = result.data;
+            } else {
+                this.produits = PRODUITS_DEFAUT;
             }
         } catch (error) {
             console.error('Erreur chargement produits:', error);
+            this.produits = PRODUITS_DEFAUT;
         }
+        
+        this.afficherProduits();
     }
     
     afficherProduits() {
@@ -70,211 +83,199 @@ class DistributeurApp {
         this.produits.forEach(produit => {
             const card = document.createElement('div');
             card.className = 'produit-card';
-            card.dataset.categorie = produit.categorie;
             card.innerHTML = `
-                <div class="produit-image">
-                    <i class="fas fa-wine-bottle"></i>
-                </div>
+                <div class="selection-glow"></div>
+                <img src="${produit.image_url || produit.image}" alt="${produit.nom}" class="produit-image floating">
                 <div class="produit-nom">${produit.nom}</div>
-                <div class="produit-marque">${produit.marque}</div>
                 <div class="produit-prix">${produit.prix} FCFA</div>
-                <div class="produit-taille">${produit.taille}</div>
             `;
             
             card.addEventListener('click', () => this.ajouterAuPanier(produit));
             grid.appendChild(card);
         });
-        
-        this.setupFiltres();
-    }
-    
-    setupFiltres() {
-        document.querySelectorAll('.filtre-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                
-                const categorie = e.target.dataset.categorie;
-                this.filtrerProduits(categorie);
-            });
-        });
-    }
-    
-    filtrerProduits(categorie) {
-        const produits = document.querySelectorAll('.produit-card');
-        produits.forEach(produit => {
-            if (categorie === 'all' || produit.dataset.categorie === categorie) {
-                produit.style.display = 'block';
-            } else {
-                produit.style.display = 'none';
-            }
-        });
     }
     
     ajouterAuPanier(produit) {
         if (this.panier.length >= 2) {
-            this.jouerAudio('error');
-            this.afficherNotification('❌ Maximum 2 boissons autorisées', 'error');
+            this.jouerMessageVocal('Maximum 2 produits autorisés. Veuillez finaliser votre sélection actuelle.');
             return;
         }
         
         if (this.panier.find(item => item.id === produit.id)) {
-            this.jouerAudio('error');
-            this.afficherNotification('❌ Cette boisson est déjà sélectionnée', 'error');
+            this.jouerMessageVocal('Ce produit est déjà dans votre sélection.');
             return;
         }
         
         this.panier.push(produit);
         this.mettreAJourPanier();
-        this.mettreAJourBoutons();
-        this.jouerAudio('selection');
+        this.jouerSon('scan');
         
-        // Animation de sélection
-        const cards = document.querySelectorAll('.produit-card');
-        cards.forEach(card => {
-            if (card.querySelector('.produit-nom').textContent === produit.nom) {
-                card.classList.add('selected');
-                setTimeout(() => card.classList.remove('selected'), 2000);
-            }
-        });
+        if (this.panier.length === 2) {
+            this.jouerMessageVocal('Sélection complète. Vous pouvez procéder au paiement.');
+        }
     }
     
     retirerDuPanier(produitId) {
         this.panier = this.panier.filter(item => item.id !== produitId);
         this.mettreAJourPanier();
-        this.mettreAJourBoutons();
     }
     
     mettreAJourPanier() {
-        const panierItems = document.getElementById('panier-items');
-        const nombreArticles = document.getElementById('nombre-articles');
-        const totalPanier = document.getElementById('total-panier');
+        const itemsElement = document.getElementById('panier-items');
+        const totalElement = document.getElementById('total-panier');
         
         if (this.panier.length === 0) {
-            panierItems.innerHTML = `
-                <div class="panier-vide">
-                    <i class="fas fa-cart-arrow-down"></i>
-                    <p>Votre panier est vide</p>
-                    <small>Sélectionnez jusqu'à 2 boissons</small>
-                </div>
-            `;
+            itemsElement.innerHTML = '<div class="panier-vide">Aucun produit sélectionné</div>';
         } else {
-            panierItems.innerHTML = '';
+            itemsElement.innerHTML = '';
             this.panier.forEach(produit => {
                 const item = document.createElement('div');
                 item.className = 'item-panier';
                 item.innerHTML = `
-                    <div class="item-info">
-                        <div class="item-image">
-                            <i class="fas fa-wine-bottle"></i>
-                        </div>
-                        <div class="item-details">
-                            <h4>${produit.nom}</h4>
-                            <div class="item-prix">${produit.prix} FCFA</div>
-                        </div>
-                    </div>
-                    <button class="btn-retirer" onclick="distributeur.retirerDuPanier(${produit.id})">
-                        <i class="fas fa-times"></i>
+                    <span>${produit.nom}</span>
+                    <span>${produit.prix} FCFA</span>
+                    <button onclick="distributeur.retirerDuPanier(${produit.id})" class="cyber-btn secondary" style="padding: 5px 10px; font-size: 0.8rem;">
+                        ✕
                     </button>
                 `;
-                panierItems.appendChild(item);
+                itemsElement.appendChild(item);
             });
         }
         
-        const total = this.panier.reduce((sum, produit) => sum + parseFloat(produit.prix), 0);
-        nombreArticles.textContent = `${this.panier.length} article(s)`;
-        totalPanier.textContent = `${total} FCFA`;
-    }
-    
-    mettreAJourBoutons() {
-        const btnVider = document.getElementById('btn-vider');
-        const btnPayer = document.getElementById('btn-payer');
+        const total = this.panier.reduce((sum, produit) => sum + produit.prix, 0);
+        totalElement.textContent = total;
         
-        btnVider.disabled = this.panier.length === 0;
-        btnPayer.disabled = this.panier.length === 0 || !this.estConnecte;
+        // Mettre à jour les boutons de navigation
+        this.mettreAJourNavigation();
     }
     
     setupEventListeners() {
-        document.getElementById('btn-vider').addEventListener('click', () => this.viderPanier());
         document.getElementById('btn-payer').addEventListener('click', () => this.demarrerPaiement());
-        document.getElementById('btn-fermer-paiement').addEventListener('click', () => this.fermerPaiement());
+        document.getElementById('annuler-paiement').addEventListener('click', () => this.annulerPaiement());
     }
     
-    viderPanier() {
-        this.panier = [];
-        this.mettreAJourPanier();
-        this.mettreAJourBoutons();
-        this.afficherNotification('🛒 Panier vidé', 'info');
+    setupNavigation() {
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const sections = document.querySelectorAll('.section');
+        
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetSection = button.getAttribute('data-section');
+                
+                // Mettre à jour les boutons
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Afficher la section
+                sections.forEach(section => section.classList.remove('active'));
+                document.getElementById(`${targetSection}-section`).classList.add('active');
+            });
+        });
+    }
+    
+    mettreAJourNavigation() {
+        const panierBtn = document.querySelector('[data-section="panier"]');
+        const paiementBtn = document.querySelector('[data-section="paiement"]');
+        
+        if (this.panier.length > 0) {
+            panierBtn.style.display = 'block';
+            paiementBtn.style.display = 'block';
+        } else {
+            panierBtn.style.display = 'none';
+            paiementBtn.style.display = 'none';
+        }
     }
     
     async demarrerPaiement() {
         if (!this.estConnecte) {
-            this.afficherNotification('❌ Impossible de se connecter au serveur', 'error');
+            this.jouerMessageVocal('Impossible de se connecter au serveur. Vérifiez votre connexion internet.');
             return;
         }
         
-        const total = this.panier.reduce((sum, produit) => sum + parseFloat(produit.prix), 0);
+        if (this.panier.length === 0) {
+            this.jouerMessageVocal('Votre panier est vide. Veuillez sélectionner au moins un produit.');
+            return;
+        }
+        
+        const total = this.panier.reduce((sum, produit) => sum + produit.prix, 0);
+        
+        this.jouerMessageVocal(`Commande de ${total} FCFA. Veuillez scanner le QR code avec votre téléphone ou utiliser l ID de transaction.`);
         
         try {
             const response = await fetch(`${this.API_URL}/api/transaction`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.getToken()}`
+                    'Authorization': 'Bearer ' + this.getTokenDistributeur()
                 },
                 body: JSON.stringify({
                     montant: total,
-                    boissons: this.panier,
-                    methodePaiement: 'QR Code'
+                    boissons: this.panier
                 })
             });
+            
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
             
             const result = await response.json();
             
             if (result.success) {
-                this.transactionEnCours = result.transaction;
-                this.afficherQRCode(result.transaction);
+                this.transactionEnCours = result.data;
+                this.afficherQRCode(result.data);
                 this.demarrerTimerExpiration();
-                this.jouerMessageVocal(TEXTE_VOCAL.selection);
+                
+                // Aller à la section paiement
+                document.querySelector('[data-section="paiement"]').click();
             } else {
                 throw new Error(result.error);
             }
         } catch (error) {
-            console.error('Erreur:', error);
-            this.afficherNotification(`❌ ${error.message}`, 'error');
+            console.error('Erreur création transaction:', error);
+            this.jouerMessageVocal('Erreur lors de la création de la transaction. Veuillez réessayer.');
         }
     }
     
+    getTokenDistributeur() {
+        // Pour le distributeur, on utilise un token fixe ou un système d'authentification spécial
+        return 'distributeur_token_special';
+    }
+    
     afficherQRCode(transaction) {
-        const paiementSection = document.getElementById('paiement-section');
         const qrCodeElement = document.getElementById('qr-code');
         const transactionIdElement = document.getElementById('transaction-id');
         const montantTransactionElement = document.getElementById('montant-transaction');
         
-        paiementSection.style.display = 'flex';
-        
         transactionIdElement.textContent = transaction.id;
         montantTransactionElement.textContent = `${transaction.montant} FCFA`;
         
-        // Générer QR code
-        qrCodeElement.innerHTML = '';
+        // Données pour le QR code
         const qrData = JSON.stringify({
             transactionId: transaction.id,
             montant: transaction.montant,
-            apiUrl: this.API_URL
+            apiUrl: this.API_URL,
+            type: 'paiement-boisson',
+            timestamp: Date.now()
         });
+        
+        qrCodeElement.innerHTML = '';
         
         try {
             const qr = qrcode(0, 'L');
             qr.addData(qrData);
             qr.make();
+            
             qrCodeElement.innerHTML = qr.createImgTag(4);
         } catch (error) {
+            console.error('Erreur génération QR:', error);
             qrCodeElement.innerHTML = `
-                <div style="padding: 2rem; text-align: center; color: #000;">
-                    <h3>ID: ${transaction.id}</h3>
-                    <p>Montant: ${transaction.montant} FCFA</p>
-                    <p>Utilisez cet ID dans l'application</p>
+                <div style="background: white; padding: 30px; border-radius: 15px; color: black; text-align: center;">
+                    <h3 style="margin: 0 0 15px 0; color: #333;">ID TRANSACTION</h3>
+                    <div style="font-size: 28px; font-weight: bold; color: #00f3ff; margin: 10px 0; font-family: Orbitron, monospace;">
+                        ${transaction.id}
+                    </div>
+                    <p style="margin: 5px 0; color: #666;">Montant: ${transaction.montant} FCFA</p>
+                    <p style="margin: 5px 0; color: #666;">Entrez cet ID dans l'application mobile</p>
                 </div>
             `;
         }
@@ -301,8 +302,9 @@ class DistributeurApp {
     
     transactionExpiree() {
         const statutElement = document.getElementById('statut-paiement');
-        statutElement.innerHTML = '<div class="statut-content"><span>❌ Transaction expirée</span></div>';
+        statutElement.innerHTML = '❌ TRANSACTION EXPIRÉE';
         statutElement.className = 'statut-paiement error';
+        this.jouerMessageVocal('Transaction expirée. Veuillez recommencer votre sélection.');
     }
     
     async verifierStatutTransaction() {
@@ -311,28 +313,35 @@ class DistributeurApp {
         try {
             const response = await fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}`, {
                 headers: {
-                    'Authorization': `Bearer ${this.getToken()}`
+                    'Authorization': 'Bearer ' + this.getTokenDistributeur()
                 }
             });
+            
+            if (!response.ok) return;
             
             const result = await response.json();
             
             if (result.success) {
-                const transaction = result.transaction;
+                const transaction = result.data;
                 const statutElement = document.getElementById('statut-paiement');
                 
                 if (transaction.statut === 'paye') {
-                    statutElement.innerHTML = '<div class="statut-content"><span>✅ Paiement réussi! Distribution en cours...</span></div>';
+                    statutElement.innerHTML = '✅ PAIEMENT RÉUSSI';
                     statutElement.className = 'statut-paiement success';
                     
-                    this.jouerMessageVocal(TEXTE_VOCAL.paiementReussi);
-                    this.chargerSolde();
+                    this.jouerSon('success');
+                    this.jouerMessageVocal('Paiement réussi. Votre commande sera prête dans 4 secondes.');
                     
                     if (this.timerExpiration) clearInterval(this.timerExpiration);
                     
                     setTimeout(() => {
                         this.reinitialiserApresPaiement();
+                        this.jouerMessageVocal('Commande délivrée. Merci et à bientôt !');
                     }, 4000);
+                } else if (transaction.statut === 'annule') {
+                    statutElement.innerHTML = '❌ TRANSACTION ANNULÉE';
+                    statutElement.className = 'statut-paiement error';
+                    if (this.timerExpiration) clearInterval(this.timerExpiration);
                 }
             }
         } catch (error) {
@@ -345,93 +354,50 @@ class DistributeurApp {
         this.transactionEnCours = null;
         this.timerExpiration = null;
         
-        document.getElementById('paiement-section').style.display = 'none';
         this.mettreAJourPanier();
-        this.mettreAJourBoutons();
+        document.querySelector('[data-section="boissons"]').click();
+        
+        const statutElement = document.getElementById('statut-paiement');
+        statutElement.innerHTML = '<div class="pulse-loader"></div><span>EN ATTENTE DE PAIEMENT...</span>';
+        statutElement.className = 'statut-paiement';
     }
     
-    fermerPaiement() {
-        if (this.transactionEnCours) {
+    annulerPaiement() {
+        if (this.transactionEnCours && this.estConnecte) {
             fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}/annuler`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${this.getToken()}`
+                    'Authorization': 'Bearer ' + this.getTokenDistributeur()
                 }
-            });
+            }).catch(console.error);
         }
         
         if (this.timerExpiration) clearInterval(this.timerExpiration);
         this.reinitialiserApresPaiement();
-    }
-    
-    async chargerSolde() {
-        try {
-            const response = await fetch(`${this.API_URL}/api/solde/distributeur`);
-            const result = await response.json();
-            
-            if (result.success) {
-                document.getElementById('solde-distributeur').textContent = result.solde;
-            }
-        } catch (error) {
-            console.error('Erreur chargement solde:', error);
-        }
+        this.jouerMessageVocal('Transaction annulée. Vous pouvez faire une nouvelle sélection.');
     }
     
     jouerMessageVocal(message) {
+        // Utilisation de la synthèse vocale du navigateur
         if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(message);
             utterance.lang = 'fr-FR';
             utterance.rate = 1.0;
+            utterance.pitch = 1.0;
             speechSynthesis.speak(utterance);
         }
     }
     
-    jouerAudio(type) {
+    jouerSon(type) {
         const audio = document.getElementById(`audio-${type}`);
         if (audio) {
             audio.currentTime = 0;
             audio.play().catch(e => console.log('Audio non joué:', e));
         }
     }
-    
-    afficherNotification(message, type = 'info') {
-        // Créer une notification toast
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
-            color: white;
-            font-weight: 600;
-            z-index: 10000;
-            animation: slideInRight 0.3s ease;
-        `;
-        
-        if (type === 'error') {
-            notification.style.background = 'var(--danger)';
-        } else if (type === 'success') {
-            notification.style.background = 'var(--success)';
-        } else {
-            notification.style.background = 'var(--primary)';
-        }
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
-    }
-    
-    getToken() {
-        return localStorage.getItem('distributeur_token') || '';
-    }
 }
 
 // Initialisation
-document.addEventListener('DOMContentLoaded', function() {
-    window.distributeur = new DistributeurApp();
+document.addEventListener('DOMContentLoaded', () => {
+    window.distributeur = new DistributeurModerne();
 });
