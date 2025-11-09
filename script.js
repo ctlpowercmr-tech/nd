@@ -1,446 +1,654 @@
-class DistributeurModerne {
-    constructor() {
-        this.panier = [];
-        this.transactionEnCours = null;
-        this.timerExpiration = null;
-        this.API_URL = CONFIG.API_URL;
-        this.estConnecte = false;
-        
-        this.init();
-    }
-    
-    async init() {
-        await this.testerConnexionServeur();
-        this.afficherBoissons();
-        this.chargerSolde();
-        this.setupEventListeners();
-        
-        setInterval(() => this.verifierStatutTransaction(), 2000);
-        setInterval(() => this.testerConnexionServeur(), 30000);
-    }
-    
-    async testerConnexionServeur() {
-        try {
-            const response = await fetch(`${this.API_URL}/api/health`);
-            
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            
-            const result = await response.json();
-            
-            if (result.status === 'OK') {
-                this.estConnecte = true;
-                this.mettreAJourStatutConnexion('connecte');
-                return true;
-            } else {
-                throw new Error('Réponse serveur invalide');
-            }
-        } catch (error) {
-            console.error('❌ Erreur connexion serveur:', error);
-            this.estConnecte = false;
-            this.mettreAJourStatutConnexion('erreur', error.message);
-            return false;
-        }
-    }
-    
-    mettreAJourStatutConnexion(statut, message = '') {
-        const statusDot = document.getElementById('status-dot');
-        const statusText = document.getElementById('status-text');
-        
-        if (statut === 'connecte') {
-            statusDot.style.background = '#27ae60';
-            statusText.textContent = 'En ligne';
-        } else {
-            statusDot.style.background = '#e74c3c';
-            statusText.textContent = 'Hors ligne';
-        }
-    }
-    
-    afficherBoissons() {
-        const grid = document.getElementById('boissons-grid');
-        grid.innerHTML = '';
-        
-        BOISSONS.forEach(boisson => {
-            const card = document.createElement('div');
-            card.className = 'boisson-card';
-            card.innerHTML = `
-                <div class="boisson-image">
-                    <img src="${boisson.image}" alt="${boisson.nom}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzQ5OGQiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+${boisson.icone} ${boisson.nom.split(' ')[0]}</dGV4dD48L3N2Zz4='">
-                </div>
-                <div class="boisson-info">
-                    <div class="boisson-nom">${boisson.nom}</div>
-                    <div class="boisson-taille">${boisson.taille}</div>
-                    <div class="boisson-prix">${boisson.prix} FCFA</div>
-                </div>
-            `;
-            
-            card.addEventListener('click', () => this.ajouterAuPanier(boisson));
-            grid.appendChild(card);
-        });
-    }
-    
-    ajouterAuPanier(boisson) {
-        if (this.panier.length >= 2) {
-            this.parler('Vous ne pouvez sélectionner que 2 boissons maximum');
-            return;
-        }
-        
-        if (this.panier.find(item => item.id === boisson.id)) {
-            this.parler('Cette boisson est déjà dans votre sélection');
-            return;
-        }
-        
-        this.panier.push(boisson);
-        this.mettreAJourPanier();
-        this.mettreAJourBoutons();
-        this.parler(`${boisson.nom} ajoutée au panier`);
-    }
-    
-    retirerDuPanier(boissonId) {
-        const boisson = this.panier.find(item => item.id === boissonId);
-        this.panier = this.panier.filter(item => item.id !== boissonId);
-        this.mettreAJourPanier();
-        this.mettreAJourBoutons();
-        
-        if (boisson) {
-            this.parler(`${boisson.nom} retirée du panier`);
-        }
-    }
-    
-    viderPanier() {
-        this.panier = [];
-        this.mettreAJourPanier();
-        this.mettreAJourBoutons();
-        this.parler('Panier vidé');
-    }
-    
-    mettreAJourPanier() {
-        const panierElement = document.getElementById('panier');
-        const totalElement = document.getElementById('total-panier');
-        const counterElement = document.getElementById('counter');
-        
-        counterElement.textContent = `${this.panier.length}/2`;
-        
-        if (this.panier.length === 0) {
-            panierElement.innerHTML = `
-                <div class="panier-vide">
-                    <i class="fas fa-cart-arrow-down"></i>
-                    <p>Aucune boisson sélectionnée</p>
-                </div>
-            `;
-        } else {
-            panierElement.innerHTML = '';
-            this.panier.forEach(boisson => {
-                const item = document.createElement('div');
-                item.className = 'item-panier';
-                item.innerHTML = `
-                    <div class="item-info">
-                        <div class="item-image">
-                            <img src="${boisson.image}" alt="${boisson.nom}">
-                        </div>
-                        <div>
-                            <div>${boisson.nom}</div>
-                            <div style="font-size: 0.9rem; color: #95a5a6;">${boisson.taille}</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="color: #f1c40f; font-weight: bold;">${boisson.prix} FCFA</span>
-                        <button onclick="distributeur.retirerDuPanier(${boisson.id})" class="btn-retirer">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                `;
-                panierElement.appendChild(item);
-            });
-        }
-        
-        const total = this.panier.reduce((sum, boisson) => sum + boisson.prix, 0);
-        totalElement.textContent = `${total} FCFA`;
-    }
-    
-    mettreAJourBoutons() {
-        const btnPayer = document.getElementById('btn-payer');
-        const btnVider = document.getElementById('btn-vider');
-        
-        btnPayer.disabled = this.panier.length === 0 || !this.estConnecte;
-        btnVider.disabled = this.panier.length === 0;
-        
-        if (!this.estConnecte) {
-            btnPayer.title = 'Serveur non connecté';
-        } else {
-            btnPayer.title = '';
-        }
-    }
-    
-    setupEventListeners() {
-        document.getElementById('btn-payer').addEventListener('click', () => this.demarrerPaiement());
-        document.getElementById('btn-vider').addEventListener('click', () => this.viderPanier());
-        document.getElementById('btn-retour').addEventListener('click', () => this.retourSelection());
-        document.getElementById('annuler-paiement').addEventListener('click', () => this.annulerPaiement());
-    }
-    
-    async demarrerPaiement() {
-        if (!this.estConnecte) {
-            this.parler('Impossible de se connecter au serveur. Vérifiez votre connexion internet.');
-            await this.testerConnexionServeur();
-            return;
-        }
-        
-        const total = this.panier.reduce((sum, boisson) => sum + boisson.prix, 0);
-        
-        try {
-            const response = await fetch(`${this.API_URL}/api/transaction`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    montant: total,
-                    boissons: this.panier
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status}`);
-            }
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                this.transactionEnCours = result.data;
-                this.afficherQRCode(result.data);
-                this.demarrerTimerExpiration();
-                this.parler('Veuillez scanner le QR code avec votre téléphone ou utiliser cet ID de transaction');
-            } else {
-                throw new Error(result.error || 'Erreur lors de la création de la transaction');
-            }
-        } catch (error) {
-            console.error('Erreur:', error);
-            this.estConnecte = false;
-            this.mettreAJourStatutConnexion('erreur', error.message);
-            this.parler('Erreur de connexion au serveur');
-        }
-    }
-    
-    afficherQRCode(transaction) {
-        const selectionSection = document.getElementById('selection-section');
-        const paiementSection = document.getElementById('paiement-section');
-        
-        selectionSection.style.display = 'none';
-        paiementSection.style.display = 'block';
-        
-        document.getElementById('transaction-id').textContent = transaction.id;
-        document.getElementById('montant-transaction').textContent = `${transaction.montant} FCFA`;
-        
-        // Générer le QR code
-        const qrCodeElement = document.getElementById('qr-code');
-        qrCodeElement.innerHTML = '';
-        
-        const qrData = JSON.stringify({
-            transactionId: transaction.id,
-            montant: transaction.montant,
-            apiUrl: this.API_URL,
-            timestamp: Date.now()
-        });
-        
-        try {
-            const typeNumber = 0;
-            const errorCorrectionLevel = 'L';
-            const qr = qrcode(typeNumber, errorCorrectionLevel);
-            qr.addData(qrData);
-            qr.make();
-            
-            qrCodeElement.innerHTML = qr.createImgTag(4);
-        } catch (error) {
-            console.error('Erreur génération QR code:', error);
-            qrCodeElement.innerHTML = `
-                <div style="text-align: center; color: black; padding: 2rem;">
-                    <h3 style="margin-bottom: 1rem;">ID Transaction:</h3>
-                    <div style="font-size: 2rem; font-weight: bold; margin-bottom: 1rem; background: #f8f9fa; padding: 1rem; border-radius: 8px;">${transaction.id}</div>
-                    <p>Montant: ${transaction.montant} FCFA</p>
-                    <p style="color: #666; margin-top: 1rem;">Entrez cet ID dans l'application mobile</p>
-                </div>
-            `;
-        }
-    }
-    
-    demarrerTimerExpiration() {
-        if (this.timerExpiration) clearInterval(this.timerExpiration);
-        
-        const timerElement = document.getElementById('expiration-timer');
-        let tempsRestant = 10 * 60;
-        
-        this.timerExpiration = setInterval(() => {
-            tempsRestant--;
-            const minutes = Math.floor(tempsRestant / 60);
-            const secondes = tempsRestant % 60;
-            timerElement.textContent = `${minutes}:${secondes.toString().padStart(2, '0')}`;
-            
-            if (tempsRestant <= 0) {
-                clearInterval(this.timerExpiration);
-                this.transactionExpiree();
-            }
-        }, 1000);
-    }
-    
-    transactionExpiree() {
-        const statutElement = document.getElementById('statut-paiement');
-        statutElement.innerHTML = `
-            <div class="statut-content">
-                <i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i>
-                <span>Transaction expirée</span>
-            </div>
-        `;
-        statutElement.className = 'statut-paiement error';
-        this.parler('Transaction expirée');
-    }
-    
-    async verifierStatutTransaction() {
-        if (!this.transactionEnCours || !this.estConnecte) return;
-        
-        try {
-            const response = await fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}`);
-            
-            if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status}`);
-            }
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                const transaction = result.data;
-                const statutElement = document.getElementById('statut-paiement');
-                
-                if (transaction.statut === 'paye') {
-                    statutElement.innerHTML = `
-                        <div class="statut-content">
-                            <i class="fas fa-check-circle" style="color: #27ae60;"></i>
-                            <span>Paiement réussi! Distribution en cours...</span>
-                        </div>
-                    `;
-                    statutElement.className = 'statut-paiement success';
-                    
-                    await this.chargerSolde();
-                    
-                    if (this.timerExpiration) clearInterval(this.timerExpiration);
-                    
-                    this.parler('Paiement réussi! Votre commande sera prête dans 4 secondes');
-                    
-                    setTimeout(() => {
-                        this.reinitialiserApresPaiement();
-                    }, 4000);
-                } else if (transaction.statut === 'annule') {
-                    statutElement.innerHTML = `
-                        <div class="statut-content">
-                            <i class="fas fa-times-circle" style="color: #e74c3c;"></i>
-                            <span>Transaction annulée</span>
-                        </div>
-                    `;
-                    statutElement.className = 'statut-paiement error';
-                    if (this.timerExpiration) clearInterval(this.timerExpiration);
-                } else if (transaction.statut === 'expire') {
-                    statutElement.innerHTML = `
-                        <div class="statut-content">
-                            <i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i>
-                            <span>Transaction expirée</span>
-                        </div>
-                    `;
-                    statutElement.className = 'statut-paiement error';
-                    if (this.timerExpiration) clearInterval(this.timerExpiration);
-                }
-            }
-        } catch (error) {
-            console.error('Erreur vérification statut:', error);
-        }
-    }
-    
-    reinitialiserApresPaiement() {
-        this.panier = [];
-        this.transactionEnCours = null;
-        this.timerExpiration = null;
-        
-        document.getElementById('selection-section').style.display = 'block';
-        document.getElementById('paiement-section').style.display = 'none';
-        
-        const statutElement = document.getElementById('statut-paiement');
-        statutElement.className = 'statut-paiement';
-        statutElement.innerHTML = `
-            <div class="statut-content">
-                <div class="loader"></div>
-                <span>En attente du paiement...</span>
-            </div>
-        `;
-        
-        this.mettreAJourPanier();
-        this.mettreAJourBoutons();
-        
-        this.parler('Merci pour votre achat! Sélectionnez de nouvelles boissons');
-    }
-    
-    retourSelection() {
-        document.getElementById('selection-section').style.display = 'block';
-        document.getElementById('paiement-section').style.display = 'none';
-        
-        if (this.timerExpiration) {
-            clearInterval(this.timerExpiration);
-        }
-    }
-    
-    async annulerPaiement() {
-        if (this.transactionEnCours && this.estConnecte) {
-            try {
-                await fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}/annuler`, {
-                    method: 'POST'
-                });
-            } catch (error) {
-                console.error('Erreur annulation:', error);
-            }
-        }
-        
-        if (this.timerExpiration) clearInterval(this.timerExpiration);
-        this.retourSelection();
-        this.parler('Transaction annulée');
-    }
-    
-    async chargerSolde() {
-        try {
-            const response = await fetch(`${this.API_URL}/api/solde/distributeur`);
-            
-            if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status}`);
-            }
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                document.getElementById('solde-distributeur').textContent = result.solde;
-            }
-        } catch (error) {
-            console.error('Erreur chargement solde:', error);
-        }
-    }
-    
-    parler(message) {
-        // Utiliser la synthèse vocale du navigateur
-        if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(message);
-            utterance.lang = 'fr-FR';
-            utterance.rate = 1.0;
-            utterance.pitch = 1.0;
-            speechSynthesis.speak(utterance);
-        }
-        
-        // Jouer un son d'attention
-        const audio = document.getElementById('audio-scan');
-        if (audio) {
-            audio.currentTime = 0;
-            audio.play().catch(e => console.log('Audio play failed:', e));
-        }
-        
-        console.log('🔊 Message vocal:', message);
-    }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-// Initialiser l'application
-document.addEventListener('DOMContentLoaded', function() {
-    window.distributeur = new DistributeurModerne();
-});
+:root {
+    --primary: #667eea;
+    --primary-dark: #5a6fd8;
+    --secondary: #764ba2;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --dark: #1f2937;
+    --light: #f8fafc;
+    --gray: #6b7280;
+}
+
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Moderne */
+.header {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 25px 30px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.logo h1 {
+    font-size: 2.5rem;
+    margin-bottom: 5px;
+    background: linear-gradient(45deg, #fff, #a5b4fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.logo p {
+    color: #cbd5e1;
+    font-size: 1.1rem;
+}
+
+.header-info {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+}
+
+.solde-distributeur {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.solde-distributeur strong {
+    font-size: 1.3rem;
+    color: #10b981;
+}
+
+.statut-connexion {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(16, 185, 129, 0.2);
+    padding: 12px 20px;
+    border-radius: 25px;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.statut-lumiere {
+    width: 12px;
+    height: 12px;
+    background: #10b981;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Section Hero */
+.hero {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 40px 20px;
+}
+
+.hero h2 {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    background: linear-gradient(45deg, #fff, #f0abfc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.hero p {
+    font-size: 1.3rem;
+    color: #cbd5e1;
+}
+
+/* Filtres */
+.filtres {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+.filtre-btn {
+    padding: 12px 25px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.filtre-btn:hover,
+.filtre-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+/* Grille des Boissons */
+.boissons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-bottom: 120px;
+}
+
+.boisson-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 25px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.boisson-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s;
+}
+
+.boisson-card:hover::before {
+    left: 100%;
+}
+
+.boisson-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    border-color: var(--primary);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.boisson-card.selected {
+    border-color: var(--success);
+    background: rgba(16, 185, 129, 0.1);
+    transform: scale(1.05);
+}
+
+.promotion-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: linear-gradient(45deg, #f59e0b, #f97316);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.boisson-image {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 20px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.boisson-card:hover .boisson-image {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.boisson-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.boisson-nom {
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.boisson-categorie {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.boisson-prix {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #10b981;
+    margin-bottom: 5px;
+}
+
+.boisson-taille {
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+/* Panier Flottant */
+.panier-flottant {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 350px;
+    background: rgba(31, 41, 55, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.panier-flottant.visible {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.panier-header {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panier-header h3 {
+    color: white;
+    margin: 0;
+}
+
+.badge {
+    background: var(--primary);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.panier-content {
+    padding: 20px;
+}
+
+.panier-items {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.panier-vide {
+    text-align: center;
+    color: #94a3b8;
+    font-style: italic;
+    padding: 20px;
+}
+
+.item-panier {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.btn-retirer {
+    background: var(--danger);
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.panier-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 1.2rem;
+}
+
+.panier-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-payer {
+    flex: 1;
+    background: linear-gradient(45deg, var(--success), #059669);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-payer:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(16, 185, 129, 0.4);
+}
+
+.btn-payer:disabled {
+    background: var(--gray);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-vider {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 15px 20px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-vider:hover {
+    transform: translateY(-2px);
+}
+
+/* Modal Paiement */
+.modal-paiement {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #1f2937, #374151);
+    border-radius: 25px;
+    padding: 30px;
+    max-width: 500px;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.modal-header h2 {
+    background: linear-gradient(45deg, #fff, #a5b4fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.btn-fermer {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.qr-section {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.qr-container {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    display: inline-block;
+    margin-bottom: 20px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+.transaction-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.info-card {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.info-card h4 {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.transaction-id {
+    font-family: monospace;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.montant {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--success);
+}
+
+.timer {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--warning);
+}
+
+.instructions {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.instruction-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.instruction-item:last-child {
+    margin-bottom: 0;
+}
+
+.instruction-item .icon {
+    font-size: 1.5rem;
+}
+
+.statut-paiement {
+    background: rgba(245, 158, 11, 0.2);
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.statut-paiement.success {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--success);
+}
+
+.statut-paiement.error {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--danger);
+}
+
+.loader {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ffffff;
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.btn-annuler {
+    width: 100%;
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-annuler:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(239, 68, 68, 0.4);
+}
+
+/* Notification Vocale */
+.notification-vocale {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(31, 41, 55, 0.95);
+    backdrop-filter: blur(20px);
+    padding: 30px 40px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    z-index: 3000;
+    display: none;
+    animation: notificationPop 0.3s ease;
+}
+
+@keyframes notificationPop {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+}
+
+.notification-icon {
+    font-size: 2.5rem;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .hero h2 {
+        font-size: 2rem;
+    }
+    
+    .boissons-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .panier-flottant {
+        width: calc(100% - 40px);
+        right: 20px;
+        left: 20px;
+    }
+    
+    .transaction-info {
+        grid-template-columns: 1fr;
+    }
+}
