@@ -5,19 +5,35 @@ class DistributeurFuturiste {
         this.timerExpiration = null;
         this.API_URL = CONFIG.API_URL;
         this.estConnecte = false;
-        this.produits = [];
         
         this.init();
     }
     
     async init() {
+        this.mettreAJourDateHeure();
+        setInterval(() => this.mettreAJourDateHeure(), 1000);
+        
         await this.testerConnexionServeur();
-        await this.chargerProduits();
-        this.chargerSolde();
+        this.afficherBoissons();
         this.setupEventListeners();
         
         setInterval(() => this.verifierStatutTransaction(), 2000);
         setInterval(() => this.testerConnexionServeur(), 30000);
+    }
+    
+    mettreAJourDateHeure() {
+        const maintenant = new Date();
+        const options = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        document.getElementById('datetime').textContent = 
+            maintenant.toLocaleDateString('fr-FR', options);
     }
     
     async testerConnexionServeur() {
@@ -27,160 +43,143 @@ class DistributeurFuturiste {
             
             if (result.success) {
                 this.estConnecte = true;
-                console.log('✅ Serveur connecté');
-                return true;
+                this.afficherNotification('✅ Serveur connecté', 'success');
+            } else {
+                throw new Error(result.error);
             }
         } catch (error) {
-            console.error('❌ Erreur connexion serveur:', error);
             this.estConnecte = false;
-            return false;
+            this.afficherNotification('❌ Serveur hors ligne', 'error');
         }
     }
     
-    async chargerProduits() {
-        try {
-            const response = await fetch(`${this.API_URL}/api/produits`);
-            const result = await response.json();
-            
-            if (result.success) {
-                this.produits = result.data;
-                this.afficherProduits();
-            }
-        } catch (error) {
-            console.error('Erreur chargement produits:', error);
-        }
+    afficherNotification(message, type = 'info') {
+        const container = document.getElementById('notifications');
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        
+        container.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
     }
     
-    afficherProduits() {
-        const grid = document.getElementById('produits-grid');
+    afficherBoissons() {
+        const grid = document.getElementById('boissons-grid');
         grid.innerHTML = '';
         
-        this.produits.forEach(produit => {
+        CONFIG.BOISSONS.forEach(boisson => {
             const card = document.createElement('div');
-            card.className = 'produit-card';
+            card.className = 'boisson-card';
             card.innerHTML = `
-                <div class="produit-image">
-                    ${this.getEmojiProduit(produit.nom)}
+                <div class="boisson-image">
+                    <img src="${boisson.image}" alt="${boisson.nom}" onerror="this.src='https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400&h=400&fit=crop'">
                 </div>
-                <div class="produit-info">
-                    <div class="produit-nom">${produit.nom}</div>
-                    <div class="produit-prix">${produit.prix} FCFA</div>
-                    <div class="produit-stock">Stock: ${produit.stock}</div>
-                </div>
+                <div class="boisson-nom">${boisson.nom}</div>
+                <div class="boisson-prix">${boisson.prix} FCFA</div>
             `;
             
-            card.addEventListener('click', () => this.ajouterAuPanier(produit));
+            card.addEventListener('click', () => this.ajouterAuPanier(boisson));
             grid.appendChild(card);
         });
     }
     
-    getEmojiProduit(nom) {
-        const emojis = {
-            'Coca-Cola': '🥤',
-            'Pepsi': '🥤',
-            'Fanta': '🍊',
-            'Sprite': '💚',
-            'Malta': '🍺',
-            'Orangina': '🍊',
-            'Ice Tea': '🍃',
-            'Schweppes': '💫'
-        };
-        
-        for (const [key, emoji] of Object.entries(emojis)) {
-            if (nom.includes(key)) return emoji;
-        }
-        return '🥤';
-    }
-    
-    ajouterAuPanier(produit) {
+    ajouterAuPanier(boisson) {
         if (this.panier.length >= 2) {
-            this.parler("Vous ne pouvez sélectionner que 2 produits maximum");
+            this.afficherNotification('❌ Maximum 2 boissons autorisées', 'error');
             return;
         }
         
-        const existant = this.panier.find(item => item.id === produit.id);
-        if (existant) {
-            existant.quantite += 1;
-        } else {
-            this.panier.push({
-                ...produit,
-                quantite: 1
-            });
+        if (this.panier.find(item => item.id === boisson.id)) {
+            this.afficherNotification('❌ Boisson déjà sélectionnée', 'error');
+            return;
         }
         
-        this.parler("Produit sélectionné avec succès");
+        this.panier.push(boisson);
         this.mettreAJourPanier();
         this.mettreAJourBoutons();
+        this.afficherNotification(`✅ ${boisson.nom} ajoutée`, 'success');
+        
+        // Message vocal simulé
+        this.syntheseVocale(`Boisson ${boisson.nom} sélectionnée`);
     }
     
-    retirerDuPanier(produitId) {
-        this.panier = this.panier.filter(item => item.id !== produitId);
+    retirerDuPanier(boissonId) {
+        const boisson = this.panier.find(item => item.id === boissonId);
+        this.panier = this.panier.filter(item => item.id !== boissonId);
         this.mettreAJourPanier();
         this.mettreAJourBoutons();
+        
+        if (boisson) {
+            this.afficherNotification(`❌ ${boisson.nom} retirée`, 'info');
+        }
     }
     
     mettreAJourPanier() {
-        const panierItems = document.getElementById('panier-items');
+        const panierElement = document.getElementById('panier');
         const totalElement = document.getElementById('total-panier');
-        const counter = document.getElementById('counter');
+        const counterElement = document.getElementById('counter');
         
-        counter.textContent = this.panier.length;
+        counterElement.textContent = this.panier.length;
         
         if (this.panier.length === 0) {
-            panierItems.innerHTML = `
+            panierElement.innerHTML = `
                 <div class="panier-vide">
-                    <div class="empty-icon">📭</div>
-                    <p>Aucun produit sélectionné</p>
+                    <div class="empty-icon">🥤</div>
+                    <p>Aucune boisson sélectionnée</p>
                 </div>
             `;
         } else {
-            panierItems.innerHTML = '';
-            this.panier.forEach(item => {
-                const element = document.createElement('div');
-                element.className = 'item-panier';
-                element.innerHTML = `
-                    <div class="item-info">
-                        <div class="item-quantite">${item.quantite}</div>
-                        <div class="item-nom">${item.nom}</div>
+            panierElement.innerHTML = '';
+            this.panier.forEach(boisson => {
+                const item = document.createElement('div');
+                item.className = 'item-panier';
+                item.innerHTML = `
+                    <div>
+                        <strong>${boisson.nom}</strong>
+                        <div>${boisson.prix} FCFA</div>
                     </div>
-                    <div class="item-prix">${item.prix * item.quantite} FCFA</div>
-                    <button class="btn-retirer" onclick="distributeur.retirerDuPanier(${item.id})">✕</button>
+                    <button onclick="distributeur.retirerDuPanier(${boisson.id})" class="btn-retirer">✕</button>
                 `;
-                panierItems.appendChild(element);
+                panierElement.appendChild(item);
             });
         }
         
-        const total = this.panier.reduce((sum, item) => sum + (item.prix * item.quantite), 0);
-        totalElement.textContent = total;
+        const total = this.panier.reduce((sum, boisson) => sum + boisson.prix, 0);
+        totalElement.textContent = `${total} FCFA`;
     }
     
     mettreAJourBoutons() {
         const btnPayer = document.getElementById('btn-payer');
+        const btnModifier = document.getElementById('btn-modifier');
+        
         btnPayer.disabled = this.panier.length === 0 || !this.estConnecte;
+        btnModifier.disabled = this.panier.length === 0;
     }
     
     setupEventListeners() {
         document.getElementById('btn-payer').addEventListener('click', () => this.demarrerPaiement());
-        document.getElementById('btn-reset').addEventListener('click', () => this.reinitialiser());
+        document.getElementById('btn-modifier').addEventListener('click', () => this.modifierCommande());
         document.getElementById('annuler-paiement').addEventListener('click', () => this.annulerPaiement());
     }
     
     async demarrerPaiement() {
         if (!this.estConnecte) {
-            this.parler("Impossible de se connecter au serveur");
+            this.afficherNotification('❌ Impossible de se connecter au serveur', 'error');
             return;
         }
         
-        const total = this.panier.reduce((sum, item) => sum + (item.prix * item.quantite), 0);
+        const total = this.panier.reduce((sum, boisson) => sum + boisson.prix, 0);
         
         try {
             const response = await fetch(`${this.API_URL}/api/transaction`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    produits: this.panier
+                    montant: total,
+                    boissons: this.panier
                 })
             });
             
@@ -190,13 +189,15 @@ class DistributeurFuturiste {
                 this.transactionEnCours = result.data;
                 this.afficherQRCode(result.data);
                 this.demarrerTimerExpiration();
-                this.parler("Veuillez scanner le QR code avec votre téléphone ou utiliser cet ID de transaction");
+                this.afficherNotification('✅ Transaction créée', 'success');
+                
+                // Message vocal
+                this.syntheseVocale("Veuillez scanner le QR code avec votre téléphone ou utiliser l'ID de transaction");
             } else {
                 throw new Error(result.error);
             }
         } catch (error) {
-            console.error('Erreur:', error);
-            this.parler("Erreur de connexion au serveur");
+            this.afficherNotification(`❌ Erreur: ${error.message}`, 'error');
         }
     }
     
@@ -207,18 +208,17 @@ class DistributeurFuturiste {
         const montantTransactionElement = document.getElementById('montant-transaction');
         
         paiementSection.style.display = 'block';
-        paiementSection.scrollIntoView({ behavior: 'smooth' });
-        
         transactionIdElement.textContent = transaction.id;
         montantTransactionElement.textContent = `${transaction.montant} FCFA`;
         
-        // Générer QR code
-        qrCodeElement.innerHTML = '';
         const qrData = JSON.stringify({
             transactionId: transaction.id,
             montant: transaction.montant,
-            apiUrl: this.API_URL
+            apiUrl: this.API_URL,
+            timestamp: Date.now()
         });
+        
+        qrCodeElement.innerHTML = '';
         
         try {
             const qr = qrcode(0, 'L');
@@ -226,21 +226,24 @@ class DistributeurFuturiste {
             qr.make();
             qrCodeElement.innerHTML = qr.createImgTag(4);
         } catch (error) {
-            console.error('Erreur QR code:', error);
             qrCodeElement.innerHTML = `
-                <div style="text-align: center; color: black; padding: 20px;">
-                    <h3>ID: ${transaction.id}</h3>
+                <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; color: black;">
+                    <h3 style="margin: 0 0 10px 0;">ID Transaction:</h3>
+                    <p style="font-size: 24px; font-weight: bold; margin: 10px 0;">${transaction.id}</p>
                     <p>Montant: ${transaction.montant} FCFA</p>
+                    <p>Entrez cet ID dans l'application mobile</p>
                 </div>
             `;
         }
+        
+        paiementSection.scrollIntoView({ behavior: 'smooth' });
     }
     
     demarrerTimerExpiration() {
         if (this.timerExpiration) clearInterval(this.timerExpiration);
         
-        let tempsRestant = 600;
         const timerElement = document.getElementById('expiration-timer');
+        let tempsRestant = 10 * 60;
         
         this.timerExpiration = setInterval(() => {
             tempsRestant--;
@@ -257,12 +260,13 @@ class DistributeurFuturiste {
     
     transactionExpiree() {
         const statutElement = document.getElementById('statut-paiement');
-        statutElement.innerHTML = '<span>❌ Transaction expirée</span>';
-        statutElement.className = 'statut-paiement error';
+        statutElement.innerHTML = '❌ Transaction expirée';
+        statutElement.className = 'paiement-status error';
+        this.afficherNotification('❌ Transaction expirée', 'error');
     }
     
     async verifierStatutTransaction() {
-        if (!this.transactionEnCours) return;
+        if (!this.transactionEnCours || !this.estConnecte) return;
         
         try {
             const response = await fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}`);
@@ -273,16 +277,17 @@ class DistributeurFuturiste {
                 const statutElement = document.getElementById('statut-paiement');
                 
                 if (transaction.statut === 'paye') {
-                    statutElement.innerHTML = '<span>✅ Paiement réussi! Distribution en cours...</span>';
-                    statutElement.className = 'statut-paiement success';
-                    
-                    this.parler("Paiement réussi! Votre commande sera prête dans 4 secondes");
-                    await this.chargerSolde();
+                    statutElement.innerHTML = '✅ Paiement réussi! Distribution en cours...';
+                    statutElement.className = 'paiement-status success';
                     
                     if (this.timerExpiration) clearInterval(this.timerExpiration);
                     
+                    // Message vocal
+                    this.syntheseVocale("Paiement réussi! Votre commande sera prête dans 4 secondes");
+                    
                     setTimeout(() => {
                         this.reinitialiserApresPaiement();
+                        this.afficherNotification('🎉 Commande délivrée avec succès!', 'success');
                     }, 4000);
                 }
             }
@@ -297,18 +302,28 @@ class DistributeurFuturiste {
         this.timerExpiration = null;
         
         document.getElementById('paiement-section').style.display = 'none';
+        const statutElement = document.getElementById('statut-paiement');
+        statutElement.className = 'paiement-status';
+        statutElement.innerHTML = `
+            <div class="status-loading">
+                <div class="loading-spinner"></div>
+                <span>En attente de paiement...</span>
+            </div>
+        `;
+        
         this.mettreAJourPanier();
         this.mettreAJourBoutons();
     }
     
-    reinitialiser() {
+    modifierCommande() {
         this.panier = [];
         this.mettreAJourPanier();
         this.mettreAJourBoutons();
+        this.afficherNotification('🔄 Commande modifiée', 'info');
     }
     
     async annulerPaiement() {
-        if (this.transactionEnCours) {
+        if (this.transactionEnCours && this.estConnecte) {
             try {
                 await fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}/annuler`, {
                     method: 'POST'
@@ -320,32 +335,10 @@ class DistributeurFuturiste {
         
         if (this.timerExpiration) clearInterval(this.timerExpiration);
         this.reinitialiserApresPaiement();
+        this.afficherNotification('❌ Transaction annulée', 'info');
     }
     
-    async chargerSolde() {
-        try {
-            const response = await fetch(`${this.API_URL}/api/solde/distributeur`);
-            const result = await response.json();
-            
-            if (result.success) {
-                document.getElementById('solde-distributeur').textContent = result.solde;
-            }
-        } catch (error) {
-            console.error('Erreur chargement solde:', error);
-        }
-    }
-    
-    parler(message) {
-        // Notification visuelle
-        const notification = document.getElementById('vocal-notification');
-        notification.textContent = message;
-        notification.classList.add('show');
-        
-        setTimeout(() => {
-            notification.classList.remove('show');
-        }, 3000);
-        
-        // Synthèse vocale
+    syntheseVocale(message) {
         if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(message);
             utterance.lang = 'fr-FR';
@@ -357,4 +350,6 @@ class DistributeurFuturiste {
 }
 
 // Initialisation
-const distributeur = new DistributeurFuturiste();
+document.addEventListener('DOMContentLoaded', function() {
+    window.distributeur = new DistributeurFuturiste();
+});
