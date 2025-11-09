@@ -1,4 +1,4 @@
-class DistributeurModerne {
+class DistributeurFuturiste {
     constructor() {
         this.panier = [];
         this.transactionEnCours = null;
@@ -11,69 +11,44 @@ class DistributeurModerne {
     }
     
     async init() {
-        console.log('🚀 Initialisation Distributeur 3.0');
         await this.testerConnexionServeur();
         await this.chargerProduits();
+        this.chargerSolde();
         this.setupEventListeners();
-        this.setupNavigation();
         
-        setInterval(() => this.testerConnexionServeur(), 30000);
         setInterval(() => this.verifierStatutTransaction(), 2000);
-        
-        this.jouerMessageVocal('Système distributeur prêt. Sélectionnez vos boissons.');
+        setInterval(() => this.testerConnexionServeur(), 30000);
     }
     
     async testerConnexionServeur() {
         try {
             const response = await fetch(`${this.API_URL}/api/health`);
-            if (!response.ok) throw new Error('Serveur non disponible');
-            
             const result = await response.json();
-            this.estConnecte = result.status === 'OK';
-            this.mettreAJourStatutConnexion(this.estConnecte ? 'connecte' : 'erreur');
             
-            return this.estConnecte;
+            if (result.success) {
+                this.estConnecte = true;
+                console.log('✅ Serveur connecté');
+                return true;
+            }
         } catch (error) {
             console.error('❌ Erreur connexion serveur:', error);
             this.estConnecte = false;
-            this.mettreAJourStatutConnexion('erreur', error.message);
             return false;
-        }
-    }
-    
-    mettreAJourStatutConnexion(statut) {
-        const element = document.getElementById('status-connexion');
-        if (!element) return;
-        
-        const led = element.querySelector('.status-led');
-        const text = element.querySelector('span');
-        
-        if (statut === 'connecte') {
-            led.style.background = 'var(--cyber-green)';
-            led.style.boxShadow = '0 0 10px var(--cyber-green)';
-            text.textContent = 'EN LIGNE';
-        } else {
-            led.style.background = '#ff4757';
-            led.style.boxShadow = '0 0 10px #ff4757';
-            text.textContent = 'HORS LIGNE';
         }
     }
     
     async chargerProduits() {
         try {
             const response = await fetch(`${this.API_URL}/api/produits`);
-            if (response.ok) {
-                const result = await response.json();
+            const result = await response.json();
+            
+            if (result.success) {
                 this.produits = result.data;
-            } else {
-                this.produits = PRODUITS_DEFAUT;
+                this.afficherProduits();
             }
         } catch (error) {
             console.error('Erreur chargement produits:', error);
-            this.produits = PRODUITS_DEFAUT;
         }
-        
-        this.afficherProduits();
     }
     
     afficherProduits() {
@@ -84,10 +59,14 @@ class DistributeurModerne {
             const card = document.createElement('div');
             card.className = 'produit-card';
             card.innerHTML = `
-                <div class="selection-glow"></div>
-                <img src="${produit.image_url || produit.image}" alt="${produit.nom}" class="produit-image floating">
-                <div class="produit-nom">${produit.nom}</div>
-                <div class="produit-prix">${produit.prix} FCFA</div>
+                <div class="produit-image">
+                    ${this.getEmojiProduit(produit.nom)}
+                </div>
+                <div class="produit-info">
+                    <div class="produit-nom">${produit.nom}</div>
+                    <div class="produit-prix">${produit.prix} FCFA</div>
+                    <div class="produit-stock">Stock: ${produit.stock}</div>
+                </div>
             `;
             
             card.addEventListener('click', () => this.ajouterAuPanier(produit));
@@ -95,128 +74,115 @@ class DistributeurModerne {
         });
     }
     
+    getEmojiProduit(nom) {
+        const emojis = {
+            'Coca-Cola': '🥤',
+            'Pepsi': '🥤',
+            'Fanta': '🍊',
+            'Sprite': '💚',
+            'Malta': '🍺',
+            'Orangina': '🍊',
+            'Ice Tea': '🍃',
+            'Schweppes': '💫'
+        };
+        
+        for (const [key, emoji] of Object.entries(emojis)) {
+            if (nom.includes(key)) return emoji;
+        }
+        return '🥤';
+    }
+    
     ajouterAuPanier(produit) {
         if (this.panier.length >= 2) {
-            this.jouerMessageVocal('Maximum 2 produits autorisés. Veuillez finaliser votre sélection actuelle.');
+            this.parler("Vous ne pouvez sélectionner que 2 produits maximum");
             return;
         }
         
-        if (this.panier.find(item => item.id === produit.id)) {
-            this.jouerMessageVocal('Ce produit est déjà dans votre sélection.');
-            return;
+        const existant = this.panier.find(item => item.id === produit.id);
+        if (existant) {
+            existant.quantite += 1;
+        } else {
+            this.panier.push({
+                ...produit,
+                quantite: 1
+            });
         }
         
-        this.panier.push(produit);
+        this.parler("Produit sélectionné avec succès");
         this.mettreAJourPanier();
-        this.jouerSon('scan');
-        
-        if (this.panier.length === 2) {
-            this.jouerMessageVocal('Sélection complète. Vous pouvez procéder au paiement.');
-        }
+        this.mettreAJourBoutons();
     }
     
     retirerDuPanier(produitId) {
         this.panier = this.panier.filter(item => item.id !== produitId);
         this.mettreAJourPanier();
+        this.mettreAJourBoutons();
     }
     
     mettreAJourPanier() {
-        const itemsElement = document.getElementById('panier-items');
+        const panierItems = document.getElementById('panier-items');
         const totalElement = document.getElementById('total-panier');
+        const counter = document.getElementById('counter');
+        
+        counter.textContent = this.panier.length;
         
         if (this.panier.length === 0) {
-            itemsElement.innerHTML = '<div class="panier-vide">Aucun produit sélectionné</div>';
+            panierItems.innerHTML = `
+                <div class="panier-vide">
+                    <div class="empty-icon">📭</div>
+                    <p>Aucun produit sélectionné</p>
+                </div>
+            `;
         } else {
-            itemsElement.innerHTML = '';
-            this.panier.forEach(produit => {
-                const item = document.createElement('div');
-                item.className = 'item-panier';
-                item.innerHTML = `
-                    <span>${produit.nom}</span>
-                    <span>${produit.prix} FCFA</span>
-                    <button onclick="distributeur.retirerDuPanier(${produit.id})" class="cyber-btn secondary" style="padding: 5px 10px; font-size: 0.8rem;">
-                        ✕
-                    </button>
+            panierItems.innerHTML = '';
+            this.panier.forEach(item => {
+                const element = document.createElement('div');
+                element.className = 'item-panier';
+                element.innerHTML = `
+                    <div class="item-info">
+                        <div class="item-quantite">${item.quantite}</div>
+                        <div class="item-nom">${item.nom}</div>
+                    </div>
+                    <div class="item-prix">${item.prix * item.quantite} FCFA</div>
+                    <button class="btn-retirer" onclick="distributeur.retirerDuPanier(${item.id})">✕</button>
                 `;
-                itemsElement.appendChild(item);
+                panierItems.appendChild(element);
             });
         }
         
-        const total = this.panier.reduce((sum, produit) => sum + produit.prix, 0);
+        const total = this.panier.reduce((sum, item) => sum + (item.prix * item.quantite), 0);
         totalElement.textContent = total;
-        
-        // Mettre à jour les boutons de navigation
-        this.mettreAJourNavigation();
+    }
+    
+    mettreAJourBoutons() {
+        const btnPayer = document.getElementById('btn-payer');
+        btnPayer.disabled = this.panier.length === 0 || !this.estConnecte;
     }
     
     setupEventListeners() {
         document.getElementById('btn-payer').addEventListener('click', () => this.demarrerPaiement());
+        document.getElementById('btn-reset').addEventListener('click', () => this.reinitialiser());
         document.getElementById('annuler-paiement').addEventListener('click', () => this.annulerPaiement());
-    }
-    
-    setupNavigation() {
-        const navButtons = document.querySelectorAll('.nav-btn');
-        const sections = document.querySelectorAll('.section');
-        
-        navButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetSection = button.getAttribute('data-section');
-                
-                // Mettre à jour les boutons
-                navButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                
-                // Afficher la section
-                sections.forEach(section => section.classList.remove('active'));
-                document.getElementById(`${targetSection}-section`).classList.add('active');
-            });
-        });
-    }
-    
-    mettreAJourNavigation() {
-        const panierBtn = document.querySelector('[data-section="panier"]');
-        const paiementBtn = document.querySelector('[data-section="paiement"]');
-        
-        if (this.panier.length > 0) {
-            panierBtn.style.display = 'block';
-            paiementBtn.style.display = 'block';
-        } else {
-            panierBtn.style.display = 'none';
-            paiementBtn.style.display = 'none';
-        }
     }
     
     async demarrerPaiement() {
         if (!this.estConnecte) {
-            this.jouerMessageVocal('Impossible de se connecter au serveur. Vérifiez votre connexion internet.');
+            this.parler("Impossible de se connecter au serveur");
             return;
         }
         
-        if (this.panier.length === 0) {
-            this.jouerMessageVocal('Votre panier est vide. Veuillez sélectionner au moins un produit.');
-            return;
-        }
-        
-        const total = this.panier.reduce((sum, produit) => sum + produit.prix, 0);
-        
-        this.jouerMessageVocal(`Commande de ${total} FCFA. Veuillez scanner le QR code avec votre téléphone ou utiliser l ID de transaction.`);
+        const total = this.panier.reduce((sum, item) => sum + (item.prix * item.quantite), 0);
         
         try {
             const response = await fetch(`${this.API_URL}/api/transaction`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + this.getTokenDistributeur()
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    montant: total,
-                    boissons: this.panier
+                    produits: this.panier
                 })
             });
-            
-            if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status}`);
-            }
             
             const result = await response.json();
             
@@ -224,58 +190,47 @@ class DistributeurModerne {
                 this.transactionEnCours = result.data;
                 this.afficherQRCode(result.data);
                 this.demarrerTimerExpiration();
-                
-                // Aller à la section paiement
-                document.querySelector('[data-section="paiement"]').click();
+                this.parler("Veuillez scanner le QR code avec votre téléphone ou utiliser cet ID de transaction");
             } else {
                 throw new Error(result.error);
             }
         } catch (error) {
-            console.error('Erreur création transaction:', error);
-            this.jouerMessageVocal('Erreur lors de la création de la transaction. Veuillez réessayer.');
+            console.error('Erreur:', error);
+            this.parler("Erreur de connexion au serveur");
         }
     }
     
-    getTokenDistributeur() {
-        // Pour le distributeur, on utilise un token fixe ou un système d'authentification spécial
-        return 'distributeur_token_special';
-    }
-    
     afficherQRCode(transaction) {
+        const paiementSection = document.getElementById('paiement-section');
         const qrCodeElement = document.getElementById('qr-code');
         const transactionIdElement = document.getElementById('transaction-id');
         const montantTransactionElement = document.getElementById('montant-transaction');
         
+        paiementSection.style.display = 'block';
+        paiementSection.scrollIntoView({ behavior: 'smooth' });
+        
         transactionIdElement.textContent = transaction.id;
         montantTransactionElement.textContent = `${transaction.montant} FCFA`;
         
-        // Données pour le QR code
+        // Générer QR code
+        qrCodeElement.innerHTML = '';
         const qrData = JSON.stringify({
             transactionId: transaction.id,
             montant: transaction.montant,
-            apiUrl: this.API_URL,
-            type: 'paiement-boisson',
-            timestamp: Date.now()
+            apiUrl: this.API_URL
         });
-        
-        qrCodeElement.innerHTML = '';
         
         try {
             const qr = qrcode(0, 'L');
             qr.addData(qrData);
             qr.make();
-            
             qrCodeElement.innerHTML = qr.createImgTag(4);
         } catch (error) {
-            console.error('Erreur génération QR:', error);
+            console.error('Erreur QR code:', error);
             qrCodeElement.innerHTML = `
-                <div style="background: white; padding: 30px; border-radius: 15px; color: black; text-align: center;">
-                    <h3 style="margin: 0 0 15px 0; color: #333;">ID TRANSACTION</h3>
-                    <div style="font-size: 28px; font-weight: bold; color: #00f3ff; margin: 10px 0; font-family: Orbitron, monospace;">
-                        ${transaction.id}
-                    </div>
-                    <p style="margin: 5px 0; color: #666;">Montant: ${transaction.montant} FCFA</p>
-                    <p style="margin: 5px 0; color: #666;">Entrez cet ID dans l'application mobile</p>
+                <div style="text-align: center; color: black; padding: 20px;">
+                    <h3>ID: ${transaction.id}</h3>
+                    <p>Montant: ${transaction.montant} FCFA</p>
                 </div>
             `;
         }
@@ -284,8 +239,8 @@ class DistributeurModerne {
     demarrerTimerExpiration() {
         if (this.timerExpiration) clearInterval(this.timerExpiration);
         
+        let tempsRestant = 600;
         const timerElement = document.getElementById('expiration-timer');
-        let tempsRestant = 10 * 60;
         
         this.timerExpiration = setInterval(() => {
             tempsRestant--;
@@ -302,23 +257,15 @@ class DistributeurModerne {
     
     transactionExpiree() {
         const statutElement = document.getElementById('statut-paiement');
-        statutElement.innerHTML = '❌ TRANSACTION EXPIRÉE';
+        statutElement.innerHTML = '<span>❌ Transaction expirée</span>';
         statutElement.className = 'statut-paiement error';
-        this.jouerMessageVocal('Transaction expirée. Veuillez recommencer votre sélection.');
     }
     
     async verifierStatutTransaction() {
-        if (!this.transactionEnCours || !this.estConnecte) return;
+        if (!this.transactionEnCours) return;
         
         try {
-            const response = await fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}`, {
-                headers: {
-                    'Authorization': 'Bearer ' + this.getTokenDistributeur()
-                }
-            });
-            
-            if (!response.ok) return;
-            
+            const response = await fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}`);
             const result = await response.json();
             
             if (result.success) {
@@ -326,22 +273,17 @@ class DistributeurModerne {
                 const statutElement = document.getElementById('statut-paiement');
                 
                 if (transaction.statut === 'paye') {
-                    statutElement.innerHTML = '✅ PAIEMENT RÉUSSI';
+                    statutElement.innerHTML = '<span>✅ Paiement réussi! Distribution en cours...</span>';
                     statutElement.className = 'statut-paiement success';
                     
-                    this.jouerSon('success');
-                    this.jouerMessageVocal('Paiement réussi. Votre commande sera prête dans 4 secondes.');
+                    this.parler("Paiement réussi! Votre commande sera prête dans 4 secondes");
+                    await this.chargerSolde();
                     
                     if (this.timerExpiration) clearInterval(this.timerExpiration);
                     
                     setTimeout(() => {
                         this.reinitialiserApresPaiement();
-                        this.jouerMessageVocal('Commande délivrée. Merci et à bientôt !');
                     }, 4000);
-                } else if (transaction.statut === 'annule') {
-                    statutElement.innerHTML = '❌ TRANSACTION ANNULÉE';
-                    statutElement.className = 'statut-paiement error';
-                    if (this.timerExpiration) clearInterval(this.timerExpiration);
                 }
             }
         } catch (error) {
@@ -354,31 +296,56 @@ class DistributeurModerne {
         this.transactionEnCours = null;
         this.timerExpiration = null;
         
+        document.getElementById('paiement-section').style.display = 'none';
         this.mettreAJourPanier();
-        document.querySelector('[data-section="boissons"]').click();
-        
-        const statutElement = document.getElementById('statut-paiement');
-        statutElement.innerHTML = '<div class="pulse-loader"></div><span>EN ATTENTE DE PAIEMENT...</span>';
-        statutElement.className = 'statut-paiement';
+        this.mettreAJourBoutons();
     }
     
-    annulerPaiement() {
-        if (this.transactionEnCours && this.estConnecte) {
-            fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}/annuler`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + this.getTokenDistributeur()
-                }
-            }).catch(console.error);
+    reinitialiser() {
+        this.panier = [];
+        this.mettreAJourPanier();
+        this.mettreAJourBoutons();
+    }
+    
+    async annulerPaiement() {
+        if (this.transactionEnCours) {
+            try {
+                await fetch(`${this.API_URL}/api/transaction/${this.transactionEnCours.id}/annuler`, {
+                    method: 'POST'
+                });
+            } catch (error) {
+                console.error('Erreur annulation:', error);
+            }
         }
         
         if (this.timerExpiration) clearInterval(this.timerExpiration);
         this.reinitialiserApresPaiement();
-        this.jouerMessageVocal('Transaction annulée. Vous pouvez faire une nouvelle sélection.');
     }
     
-    jouerMessageVocal(message) {
-        // Utilisation de la synthèse vocale du navigateur
+    async chargerSolde() {
+        try {
+            const response = await fetch(`${this.API_URL}/api/solde/distributeur`);
+            const result = await response.json();
+            
+            if (result.success) {
+                document.getElementById('solde-distributeur').textContent = result.solde;
+            }
+        } catch (error) {
+            console.error('Erreur chargement solde:', error);
+        }
+    }
+    
+    parler(message) {
+        // Notification visuelle
+        const notification = document.getElementById('vocal-notification');
+        notification.textContent = message;
+        notification.classList.add('show');
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+        
+        // Synthèse vocale
         if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(message);
             utterance.lang = 'fr-FR';
@@ -387,17 +354,7 @@ class DistributeurModerne {
             speechSynthesis.speak(utterance);
         }
     }
-    
-    jouerSon(type) {
-        const audio = document.getElementById(`audio-${type}`);
-        if (audio) {
-            audio.currentTime = 0;
-            audio.play().catch(e => console.log('Audio non joué:', e));
-        }
-    }
 }
 
 // Initialisation
-document.addEventListener('DOMContentLoaded', () => {
-    window.distributeur = new DistributeurModerne();
-});
+const distributeur = new DistributeurFuturiste();
